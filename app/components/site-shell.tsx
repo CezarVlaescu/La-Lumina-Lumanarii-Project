@@ -58,7 +58,14 @@ function Header({
       </div>
       <header className="site-header">
         <Link className="brand" href="/" aria-label="La Lumina Lumânării, pagina principală">
-          <span className="brand__flame" aria-hidden="true">◊</span>
+          <Image
+            className="brand__logo"
+            src="/images/brand-logo.png"
+            alt=""
+            width={38}
+            height={38}
+            priority
+          />
           <span>La Lumina Lumânării</span>
         </Link>
         <nav className="desktop-nav" aria-label="Navigație principală">
@@ -320,7 +327,13 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
       <div className="footer__main page-shell">
         <div className="footer__brand">
           <Link className="brand" href="/">
-            <span className="brand__flame" aria-hidden="true">◊</span>
+            <Image
+              className="brand__logo"
+              src="/images/brand-logo.png"
+              alt=""
+              width={38}
+              height={38}
+            />
             <span>La Lumina Lumânării</span>
           </Link>
           <p>Lumânări artizanale, turnate în loturi mici în România.</p>

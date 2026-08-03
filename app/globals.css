@@ -143,11 +143,11 @@ h4 {
   white-space: nowrap;
 }
 
-.brand__flame {
-  color: var(--gold);
-  font-family: var(--sans);
-  font-size: 18px;
-  transform: rotate(45deg);
+.brand__logo {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .desktop-nav {
@@ -5450,8 +5450,9 @@ h4 {
     font-size: 21px;
   }
 
-  .brand__flame {
-    display: none;
+  .brand__logo {
+    width: 30px;
+    height: 30px;
   }
 
   .desktop-only {
@@ -5683,6 +5684,11 @@ h4 {
 @media (max-width: 430px) {
   .brand {
     font-size: 19px;
+  }
+
+  .brand__logo {
+    width: 28px;
+    height: 28px;
   }
 
   .header-actions {
@@ -8592,6 +8598,11 @@ h4 {
 
   .brand {
     font-size: 17px;
+  }
+
+  .brand__logo {
+    width: 26px;
+    height: 26px;
   }
 
   .header-actions {

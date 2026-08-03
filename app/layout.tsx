@@ -65,8 +65,14 @@ export const metadata: Metadata = {
     "codex-preview": "development",
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
@@ -112,7 +118,7 @@ export default async function RootLayout({
     "@type": "Organization",
     name: storeProfile.brandName || siteName,
     url: siteUrl,
-    logo: absoluteSiteUrl("/favicon.svg"),
+    logo: absoluteSiteUrl("/images/brand-logo.png"),
     ...(storeProfile.legalName ? { legalName: storeProfile.legalName } : {}),
     ...(storeProfile.contactEmail
       ? { email: storeProfile.contactEmail }
