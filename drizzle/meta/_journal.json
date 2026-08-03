@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1785314099424,
+      "tag": "0000_broad_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785317198392,
+      "tag": "0001_salty_devos",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785322655949,
+      "tag": "0002_wild_wolf_cub",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1785325884612,
+      "tag": "0003_early_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1785327490038,
+      "tag": "0004_freezing_justice",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1785329038754,
+      "tag": "0005_omniscient_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1785394693297,
+      "tag": "0006_cooing_beyonder",
+      "breakpoints": true
+    }
+  ]
+}
