@@ -5,10 +5,28 @@ import {
 } from "./supabase-server";
 
 export function isSameOriginMutation(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
+  const originHeader = request.headers.get("origin");
+  if (!originHeader) return true;
+
   try {
-    return new URL(origin).origin === new URL(request.url).origin;
+    const origin = new URL(originHeader).origin;
+    const allowedOrigins = new Set<string>();
+
+    for (const candidate of [
+      request.url,
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.URL,
+    ]) {
+      if (!candidate) continue;
+
+      try {
+        allowedOrigins.add(new URL(candidate).origin);
+      } catch {
+        // Ignoră valorile URL invalide.
+      }
+    }
+
+    return allowedOrigins.has(origin);
   } catch {
     return false;
   }
