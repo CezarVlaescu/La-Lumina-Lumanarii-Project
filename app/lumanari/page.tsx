@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductDetail } from "../../components/product-detail";
-import { ProductCard } from "../../components/product-card";
-import {
-  getStoreProduct,
-  getStoreProducts,
-} from "../../lib/catalog-repository";
-import { absoluteSiteUrl, siteName } from "../../lib/site-config";
+import { ProductCard } from "../components/product-card";
+import { ProductDetail } from "../components/product-detail";
+import { getStoreProduct, getStoreProducts } from "../lib/catalog-repository";
+import { absoluteSiteUrl, siteName } from "../lib/site-config";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
