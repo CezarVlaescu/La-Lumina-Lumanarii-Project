@@ -1,100 +1,29 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { ProductCard } from "../components/product-card";
-import { ProductDetail } from "../components/product-detail";
-import { getStoreProduct, getStoreProducts } from "../lib/catalog-repository";
-import { absoluteSiteUrl, siteName } from "../lib/site-config";
+import Link from "next/link";
+import { CatalogBrowserFromUrl } from "../components/catalog-browser";
+import { getStoreProducts } from "../lib/catalog-repository";
 
-type ProductPageProps = {
-  params: Promise<{ slug: string }>;
+export const metadata: Metadata = {
+  title: "Lumânări artizanale",
+  description: "Descoperă lumânările artizanale La Lumina Lumânării.",
+  alternates: { canonical: "/lumanari" },
 };
-
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await getStoreProduct(slug);
-  if (!product) return {};
-  return {
-    title: product.name,
-    description: product.description,
-    alternates: { canonical: `/lumanari/${product.slug}` },
-    openGraph: {
-      type: "website",
-      title: product.name,
-      description: product.description,
-      url: `/lumanari/${product.slug}`,
-      images: [
-        {
-          url: product.image,
-          alt: product.name,
-        },
-      ],
-    },
-  };
-}
-
-export default async function CandleProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
+export default async function CandlesPage() {
   const products = await getStoreProducts();
-  const product = products.find((item) => item.slug === slug);
-  if (!product) notFound();
-  const related = products
-    .filter((item) => item.slug !== product.slug)
-    .sort((a, b) => Number(b.collection === product.collection) - Number(a.collection === product.collection))
-    .slice(0, 3);
-  const available =
-    (product.stock ?? 0) > 0 ||
-    Boolean(product.variants?.some((variant) => (variant.stock ?? 0) > 0));
-  const prices = [
-    product.price,
-    ...(product.variants?.map((variant) => variant.price ?? product.price) ?? []),
-  ].filter((price): price is number => price !== null);
-  const productJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    image: [...new Set([product.image, ...product.gallery])].map((image) =>
-      absoluteSiteUrl(image),
-    ),
-    sku: product.slug,
-    category: product.category,
-    brand: {
-      "@type": "Brand",
-      name: siteName,
-    },
-    ...(prices.length
-      ? {
-          offers: {
-            "@type": "Offer",
-            url: absoluteSiteUrl(`/lumanari/${product.slug}`),
-            priceCurrency: "RON",
-            price: Math.min(...prices).toFixed(2),
-            availability: available
-              ? "https://schema.org/InStock"
-              : "https://schema.org/OutOfStock",
-            itemCondition: "https://schema.org/NewCondition",
-          },
-        }
-      : {}),
-  };
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
-      <ProductDetail product={product} />
-      <section className="section page-shell related-products">
-        <div className="section-heading section-heading--split">
-          <div><p className="eyebrow">Continuă ritualul</p><h2>S-ar putea să-ți placă și.</h2></div>
+    <main>
+      <header className="page-hero">
+        <div className="page-hero__inner page-shell">
+          <div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Lumânări</span></div>
+          <p className="eyebrow eyebrow--gold">Catalogul nostru</p>
+          <h1>Alege lumina care spune povestea ta.</h1>
+          <p className="page-hero__lead">Piese decorative lucrate și pictate manual, disponibile în colecții sezoniere și variante atent finisate.</p>
         </div>
-        <div className="product-grid">{related.map((item) => <ProductCard product={item} key={item.slug} />)}</div>
-      </section>
-    </>
+      </header>
+      <CatalogBrowserFromUrl products={products} />
+    </main>
   );
 }

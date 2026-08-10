@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProductCard } from "./product-card";
 import { allCollectionThemes, type Product } from "../lib/catalog";
 import { SearchIcon } from "./icons";
@@ -13,6 +14,23 @@ type CatalogBrowserProps = {
   initialTheme?: string;
   initialSort?: string;
 };
+
+export function CatalogBrowserFromUrl({ products }: { products: Product[] }) {
+  const searchParams = useSearchParams();
+  const collection = searchParams.get("colectie") ?? "";
+  const theme = searchParams.get("tema") ?? "";
+  const sort = searchParams.get("sort") ?? "featured";
+
+  return (
+    <CatalogBrowser
+      key={`${collection}:${theme}:${sort}`}
+      products={products}
+      initialCollection={collection}
+      initialTheme={theme}
+      initialSort={sort}
+    />
+  );
+}
 
 export function CatalogBrowser({
   products,
