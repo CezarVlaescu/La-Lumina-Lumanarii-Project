@@ -11,14 +11,19 @@ import {
   getProductStock,
 } from "../lib/catalog";
 import { BagIcon } from "./icons";
-import { useStore } from "./store-provider";
+import { getCartLineId, useStore } from "./store-provider";
 
 export function ProductDetail({ product }: { product: Product }) {
-  const { addProduct } = useStore();
+  const { addProduct, lines } = useStore();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(
-    product.variants?.[0]?.id ?? "",
+    product.variants?.find(
+      (variant) =>
+        getProductPrice(product, variant.id) !== null &&
+        getProductStock(product, variant.id) > 0,
+    )?.id ?? product.variants?.[0]?.id ?? "",
   );
+  const [addMessage, setAddMessage] = useState("");
   const selectedVariant = product.variants?.find(
     (variant) => variant.id === selectedVariantId,
   );
@@ -35,9 +40,24 @@ export function ProductDetail({ product }: { product: Product }) {
 
   function addSelectedQuantity() {
     if (selectedPrice === null || selectedStock < 1) return;
-    for (let index = 0; index < quantity; index += 1) {
-      addProduct(product, selectedVariantId || undefined);
-    }
+    const lineId = getCartLineId(product.slug, selectedVariantId || undefined);
+    const quantityInCart =
+      lines.find(
+        (line) =>
+          getCartLineId(line.product.slug, line.variantId) === lineId,
+      )?.quantity ?? 0;
+    const addedQuantity = Math.max(
+      0,
+      Math.min(quantity, selectedStock - quantityInCart),
+    );
+    addProduct(product, selectedVariantId || undefined, quantity);
+    setAddMessage(
+      addedQuantity > 0
+        ? addedQuantity === 1
+          ? "Produsul a fost adăugat în coș."
+          : `${addedQuantity} produse au fost adăugate în coș.`
+        : "Cantitatea maximă disponibilă este deja în coș.",
+    );
   }
 
   function selectVariant(variantId: string) {
@@ -45,6 +65,8 @@ export function ProductDetail({ product }: { product: Product }) {
     if (!variant) return;
     setSelectedVariantId(variantId);
     setActiveImage(variant.image);
+    setQuantity(1);
+    setAddMessage("");
   }
 
   return (
@@ -71,6 +93,7 @@ export function ProductDetail({ product }: { product: Product }) {
           <div className="product-detail__miniatures">
             {gallery.map((image, index) => (
               <button
+                type="button"
                 className={image === activeImage ? "product-miniature product-miniature--active" : "product-miniature"}
                 aria-label={`Vezi imaginea ${index + 1} din ${gallery.length}`}
                 onClick={() => setActiveImage(image)}
@@ -101,6 +124,7 @@ export function ProductDetail({ product }: { product: Product }) {
               <div className="product-variants__options">
                 {product.variants.map((variant) => (
                   <button
+                    type="button"
                     className={variant.id === selectedVariantId ? "variant-option variant-option--active" : "variant-option"}
                     key={variant.id}
                     onClick={() => selectVariant(variant.id)}
@@ -124,15 +148,49 @@ export function ProductDetail({ product }: { product: Product }) {
             {product.burnTime && <div><span>Timp de ardere</span><strong>{product.burnTime}</strong></div>}
           </div>
           {selectedPrice !== null && selectedStock > 0 ? (
-            <div className="product-buy">
-              <div className="quantity quantity--large">
-                <button onClick={() => setQuantity((current) => Math.max(1, current - 1))} aria-label="Scade cantitatea">−</button>
-                <span>{quantity}</span>
-                <button onClick={() => setQuantity((current) => Math.min(99, current + 1))} aria-label="Crește cantitatea">+</button>
+            <div className="product-buy-wrapper">
+              <p className="product-stock">
+                {selectedStock <= 3
+                  ? `Doar ${selectedStock} ${selectedStock === 1 ? "bucată disponibilă" : "bucăți disponibile"}`
+                  : "În stoc · pregătită pentru comandă"}
+              </p>
+              <div className="product-buy">
+                <div className="quantity quantity--large">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                    aria-label="Scade cantitatea"
+                    disabled={quantity <= 1}
+                  >
+                    −
+                  </button>
+                  <span aria-live="polite">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setQuantity((current) =>
+                        Math.min(selectedStock, 99, current + 1),
+                      )
+                    }
+                    aria-label="Crește cantitatea"
+                    disabled={quantity >= selectedStock || quantity >= 99}
+                  >
+                    +
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="button button--primary product-add"
+                  onClick={addSelectedQuantity}
+                >
+                  <BagIcon size={19} /> Adaugă în coș · {formatPrice(selectedPrice * quantity)}
+                </button>
               </div>
-              <button className="button button--primary product-add" onClick={addSelectedQuantity}>
-                <BagIcon size={19} /> Adaugă în coș · {formatPrice(selectedPrice * quantity)}
-              </button>
+              {addMessage && (
+                <p className="product-add-message" role="status">
+                  {addMessage}
+                </p>
+              )}
             </div>
           ) : selectedPrice !== null ? (
             <div className="product-buy product-buy--unavailable">

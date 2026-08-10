@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   formatPrice,
   getProductPrice,
+  getProductStock,
   getProductVariant,
   seasonalCollectionGroups,
   specialThemeCollections,
@@ -241,12 +242,32 @@ function Header({
 }
 
 function CartDrawer() {
-  const { lines, cartOpen, setCartOpen, subtotal, updateQuantity } = useStore();
+  const {
+    cartNotice,
+    cartOpen,
+    cartReady,
+    dismissCartNotice,
+    lines,
+    setCartOpen,
+    subtotal,
+    updateQuantity,
+  } = useStore();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     document.body.classList.toggle("scroll-locked", cartOpen);
-    return () => document.body.classList.remove("scroll-locked");
-  }, [cartOpen]);
+    if (cartOpen) closeButtonRef.current?.focus();
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setCartOpen(false);
+    }
+
+    if (cartOpen) window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.classList.remove("scroll-locked");
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [cartOpen, setCartOpen]);
 
   return (
     <>
@@ -254,19 +275,26 @@ function CartDrawer() {
         className={cartOpen ? "cart-drawer cart-drawer--open" : "cart-drawer"}
         aria-hidden={!cartOpen}
         aria-label="Coșul tău"
+        aria-modal="true"
         inert={!cartOpen}
+        role="dialog"
       >
         <div className="cart-drawer__header">
           <div>
             <p className="eyebrow">Ritualul tău</p>
             <h2>Coșul tău</h2>
           </div>
-          <button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Închide coșul">
+          <button ref={closeButtonRef} className="icon-button" onClick={() => setCartOpen(false)} aria-label="Închide coșul">
             <CloseIcon />
           </button>
         </div>
         <div className="cart-drawer__body">
-          {lines.length === 0 ? (
+          {!cartReady ? (
+            <div className="cart-loading" role="status">
+              <span className="cart-loading__spinner" aria-hidden="true" />
+              <p>Pregătim coșul tău…</p>
+            </div>
+          ) : lines.length === 0 ? (
             <div className="empty-cart">
               <span className="empty-cart__flame">♢</span>
               <h3>Coșul așteaptă lumină.</h3>
@@ -276,32 +304,60 @@ function CartDrawer() {
               </Link>
             </div>
           ) : (
-            <div className="cart-lines">
+            <div className="cart-lines-wrapper">
+              {cartNotice && (
+                <div className="cart-feedback" role="status">
+                  <span>{cartNotice}</span>
+                  <button type="button" onClick={dismissCartNotice}>
+                    Închide
+                  </button>
+                </div>
+              )}
+              <div className="cart-lines">
               {lines.map(({ product, variantId, quantity }) => {
                 const variant = getProductVariant(product, variantId);
                 const lineId = getCartLineId(product.slug, variantId);
+                const stock = getProductStock(product, variantId);
                 return (
                 <article className="cart-line" key={lineId}>
                   <div className="cart-line__image">
-                    <Image src={variant?.image ?? product.image} alt="" width={96} height={112} unoptimized />
+                    <Image src={variant?.image ?? product.image} alt={product.name} width={96} height={112} unoptimized />
                   </div>
                   <div className="cart-line__info">
                     <Link href={`/lumanari/${product.slug}`} onClick={() => setCartOpen(false)}>{product.name}</Link>
                     <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${product.weight}` : ""}</span>
+                    <small className={stock <= 3 ? "cart-stock cart-stock--low" : "cart-stock"}>
+                      {stock <= 3 ? `${stock} disponibile` : "În stoc"}
+                    </small>
                     <div className="quantity">
-                      <button onClick={() => updateQuantity(lineId, quantity - 1)} aria-label={`Scade cantitatea pentru ${product.name}`}>−</button>
-                      <span>{quantity}</span>
-                      <button onClick={() => updateQuantity(lineId, quantity + 1)} aria-label={`Crește cantitatea pentru ${product.name}`}>+</button>
+                      <button type="button" onClick={() => updateQuantity(lineId, quantity - 1)} aria-label={`Scade cantitatea pentru ${product.name}`}>−</button>
+                      <span aria-live="polite">{quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(lineId, quantity + 1)}
+                        aria-label={`Crește cantitatea pentru ${product.name}`}
+                        disabled={quantity >= stock || quantity >= 99}
+                      >
+                        +
+                      </button>
                     </div>
+                    <button
+                      type="button"
+                      className="cart-remove"
+                      onClick={() => updateQuantity(lineId, 0)}
+                    >
+                      Elimină
+                    </button>
                   </div>
                   <strong>{formatPrice((getProductPrice(product, variantId) ?? 0) * quantity)}</strong>
                 </article>
                 );
               })}
+              </div>
             </div>
           )}
         </div>
-        {lines.length > 0 && (
+        {cartReady && lines.length > 0 && (
           <div className="cart-drawer__footer">
             <div className="subtotal"><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
             <p>Transportul se calculează la pasul următor.</p>

@@ -3,7 +3,7 @@
 Magazin online React pentru lumânări artizanale, construit în direcția vizuală
 „Ritual nocturn”: mov închis, lumină caldă și accente aurii.
 
-Versiunea curentă este **V1.14**. Include magazinul public, catalogul cu variante,
+Versiunea curentă este **V1.15**. Include magazinul public, catalogul cu variante,
 coșul persistent, checkout-ul cu ramburs și Stripe, administrarea comenzilor și
 stocului, livrarea configurabilă, paginile legale, centrul de lansare, backupul
 portabil, adaptorul Supabase și autentificarea Membru/Administrator. Homepage-ul
@@ -14,7 +14,10 @@ Emailurile tranzacționale au acum identitatea vizuală a magazinului, acțiuni
 directe, `Reply-To` către client și notificări pentru formularul Contact.
 Șabloanele românești Supabase pentru confirmarea contului și resetarea parolei
 sunt pregătite în `supabase/email-templates`; activarea este descrisă în
-`EMAIL_SETUP.md`.
+`EMAIL_SETUP.md`. Coșul și checkoutul verifică acum limitele reale de stoc,
+afișează feedback clar, evită stările false înainte de încărcarea coșului și
+păstrează aceeași încercare de checkout la erorile de rețea pentru a preveni
+comenzile duplicate.
 
 ## Cerințe
 
@@ -69,6 +72,7 @@ validarea artefactului de producție.
 - **V1.12** — navigație colecții și aplicarea completă a paletei active
 - **V1.13** — homepage dinamic, bestseller-uri și ofertă săptămânală din Admin
 - **V1.14** — emailuri finisate, notificări Contact și șabloane Supabase Auth
+- **V1.15** — coș, checkout și experiență mobilă finisate pentru testarea finală
 
 Versiunea găzduită în Sites folosește D1 pentru date și R2 pentru imaginile
 încărcate. Exportul din Admin păstrează catalogul complet și toate

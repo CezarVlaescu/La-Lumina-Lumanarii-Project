@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   formatPrice,
   getProductPrice,
@@ -31,7 +31,7 @@ export function CheckoutForm({
   shippingSettings,
   accountDefaults,
 }: CheckoutFormProps) {
-  const { lines, subtotal, clearCart } = useStore();
+  const { cartReady, lines, subtotal, clearCart } = useStore();
   const [completed, setCompleted] = useState<{
     orderNumber: string;
     total: number;
@@ -40,13 +40,35 @@ export function CheckoutForm({
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [orderNumberCopied, setOrderNumberCopied] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "cash_on_delivery" | "stripe"
   >("cash_on_delivery");
   const [shippingMethod, setShippingMethod] =
     useState<ShippingMethod>("sameday_address");
   const checkoutAttemptId = useRef("");
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const shipping = shippingCost(subtotal, shippingMethod, shippingSettings);
+
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.focus();
+    errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [error]);
+
+  function showError(message: string) {
+    setError(message);
+  }
+
+  async function copyOrderNumber() {
+    if (!completed) return;
+    try {
+      await navigator.clipboard.writeText(completed.orderNumber);
+      setOrderNumberCopied(true);
+    } catch {
+      setOrderNumberCopied(false);
+    }
+  }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,7 +114,7 @@ export function CheckoutForm({
           })),
         }),
       });
-      const result = (await response.json()) as {
+      const result = (await response.json().catch(() => ({}))) as {
         order?: {
           orderNumber: string;
           total: number;
@@ -103,7 +125,9 @@ export function CheckoutForm({
         error?: string;
       };
       if (!response.ok || !result.order) {
-        if (response.ok === false) checkoutAttemptId.current = "";
+        if (paymentMethod === "stripe" && response.status === 409) {
+          checkoutAttemptId.current = "";
+        }
         throw new Error(
           result.error ?? "Comanda nu a putut fi înregistrată. Încearcă din nou.",
         );
@@ -121,11 +145,13 @@ export function CheckoutForm({
       clearCart();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Comanda nu a putut fi înregistrată. Încearcă din nou.",
-      );
+      const message =
+        submitError instanceof TypeError
+          ? "Nu ne-am putut conecta la magazin. Verifică internetul și apasă din nou; comanda nu va fi dublată."
+          : submitError instanceof Error
+            ? submitError.message
+            : "Comanda nu a putut fi înregistrată. Încearcă din nou.";
+      showError(message);
     } finally {
       setSubmitting(false);
     }
@@ -141,6 +167,13 @@ export function CheckoutForm({
           <span>Numărul comenzii</span>
           <strong>{completed.orderNumber}</strong>
           <small>Total ramburs: {formatPrice(completed.total)}</small>
+          <button
+            type="button"
+            className="checkout-copy-order"
+            onClick={copyOrderNumber}
+          >
+            {orderNumberCopied ? "Număr copiat ✓" : "Copiază numărul"}
+          </button>
         </div>
         <p>
           {completed.confirmationEmailSent ? (
@@ -156,7 +189,24 @@ export function CheckoutForm({
             </>
           )}
         </p>
-        <Link className="button button--primary" href="/">Înapoi acasă</Link>
+        <div className="checkout-success__actions">
+          {accountDefaults && (
+            <Link className="button button--outline-gold" href="/cont">
+              Vezi comenzile mele
+            </Link>
+          )}
+          <Link className="button button--primary" href="/">Înapoi acasă</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!cartReady) {
+    return (
+      <div className="checkout-loading" role="status">
+        <span className="cart-loading__spinner" aria-hidden="true" />
+        <h1>Pregătim checkoutul…</h1>
+        <p>Verificăm produsele și totalul comenzii.</p>
       </div>
     );
   }
@@ -173,7 +223,11 @@ export function CheckoutForm({
   }
 
   return (
-    <form className="checkout-layout" onSubmit={submitOrder}>
+    <form
+      className="checkout-layout"
+      onSubmit={submitOrder}
+      aria-busy={submitting}
+    >
       <div className="checkout-fields">
         <div className="checkout-heading">
           <p className="eyebrow">Checkout securizat</p>
@@ -188,10 +242,58 @@ export function CheckoutForm({
             </p>
           )}
           <div className="form-grid">
-            <label className="field field--wide"><span>Email</span><input name="email" type="email" autoComplete="email" required readOnly={Boolean(accountDefaults)} defaultValue={accountDefaults?.email} placeholder="email@exemplu.ro" /></label>
-            <label className="field"><span>Prenume</span><input name="firstName" autoComplete="given-name" required defaultValue={accountDefaults?.firstName} /></label>
-            <label className="field"><span>Nume</span><input name="lastName" autoComplete="family-name" required defaultValue={accountDefaults?.lastName} /></label>
-            <label className="field field--wide"><span>Telefon</span><input name="phone" type="tel" autoComplete="tel" inputMode="tel" required defaultValue={accountDefaults?.phone} placeholder="07xx xxx xxx" /></label>
+            <label className="field field--wide">
+              <span>Email</span>
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                maxLength={180}
+                readOnly={Boolean(accountDefaults)}
+                defaultValue={accountDefaults?.email}
+                placeholder="email@exemplu.ro"
+              />
+            </label>
+            <label className="field">
+              <span>Prenume</span>
+              <input
+                name="firstName"
+                autoComplete="given-name"
+                required
+                minLength={2}
+                maxLength={80}
+                defaultValue={accountDefaults?.firstName}
+              />
+            </label>
+            <label className="field">
+              <span>Nume</span>
+              <input
+                name="lastName"
+                autoComplete="family-name"
+                required
+                minLength={2}
+                maxLength={80}
+                defaultValue={accountDefaults?.lastName}
+              />
+            </label>
+            <label className="field field--wide">
+              <span>Telefon</span>
+              <input
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                required
+                minLength={9}
+                maxLength={30}
+                pattern="[+0-9() .-]{9,30}"
+                title="Introdu un număr de telefon valid, de exemplu 0712 345 678."
+                defaultValue={accountDefaults?.phone}
+                placeholder="07xx xxx xxx"
+              />
+              <small>Îl folosim doar pentru confirmarea și livrarea comenzii.</small>
+            </label>
           </div>
         </section>
         <section className="form-section">
@@ -240,13 +342,26 @@ export function CheckoutForm({
           </div>
           <div className="form-grid">
             {shippingMethod === "sameday_address" ? (
-              <label className="field field--wide"><span>Adresă</span><input name="addressLine" autoComplete="street-address" required defaultValue={accountDefaults?.addressLine} placeholder="Strada, număr, bloc, apartament" /></label>
+              <label className="field field--wide">
+                <span>Adresă</span>
+                <input
+                  name="addressLine"
+                  autoComplete="street-address"
+                  required
+                  minLength={5}
+                  maxLength={220}
+                  defaultValue={accountDefaults?.addressLine}
+                  placeholder="Strada, număr, bloc, apartament"
+                />
+              </label>
             ) : (
               <label className="field field--wide">
                 <span>Easybox ales</span>
                 <input
                   name="shippingPointName"
                   required
+                  minLength={5}
+                  maxLength={180}
                   placeholder="Ex.: Easybox Kaufland Mărăști, Str. Fabricii 12"
                 />
                 <small>
@@ -255,8 +370,14 @@ export function CheckoutForm({
                 </small>
               </label>
             )}
-            <label className="field"><span>Oraș</span><input name="city" autoComplete="address-level2" required defaultValue={accountDefaults?.city} /></label>
-            <label className="field"><span>Județ</span><input name="county" autoComplete="address-level1" required defaultValue={accountDefaults?.county} /></label>
+            <label className="field">
+              <span>Oraș</span>
+              <input name="city" autoComplete="address-level2" required minLength={2} maxLength={100} defaultValue={accountDefaults?.city} />
+            </label>
+            <label className="field">
+              <span>Județ</span>
+              <input name="county" autoComplete="address-level1" required minLength={2} maxLength={100} defaultValue={accountDefaults?.county} />
+            </label>
             <label className="field">
               <span>
                 Cod poștal{shippingMethod === "sameday_easybox" ? " (opțional)" : ""}
@@ -266,11 +387,19 @@ export function CheckoutForm({
                 autoComplete="postal-code"
                 inputMode="numeric"
                 required={shippingMethod === "sameday_address"}
+                minLength={shippingMethod === "sameday_address" ? 3 : undefined}
+                maxLength={12}
+                pattern="[0-9A-Za-z -]{3,12}"
+                title="Introdu un cod poștal valid."
                 defaultValue={accountDefaults?.postalCode}
               />
             </label>
             <label className="field"><span>Țara</span><input name="country" value="România" readOnly /></label>
-            <label className="field field--wide"><span>Observații pentru comandă (opțional)</span><textarea name="note" rows={3} placeholder="Detalii utile pentru atelier sau curier" /></label>
+            <label className="field field--wide">
+              <span>Observații pentru comandă (opțional)</span>
+              <textarea name="note" rows={3} maxLength={800} placeholder="Detalii utile pentru atelier sau curier" />
+              <small>Maximum 800 de caractere. Nu include date sensibile.</small>
+            </label>
           </div>
         </section>
         <section className="form-section">
@@ -335,10 +464,23 @@ export function CheckoutForm({
             </span>
           </label>
         </section>
-        {error && <p className="checkout-error" role="alert">{error}</p>}
+        {error && (
+          <p
+            ref={errorRef}
+            className="checkout-error"
+            role="alert"
+            tabIndex={-1}
+          >
+            <strong>Nu am putut finaliza comanda.</strong>
+            <span>{error}</span>
+          </p>
+        )}
       </div>
       <aside className="checkout-summary">
-        <p className="eyebrow">Comanda ta</p>
+        <div className="checkout-summary__heading">
+          <p className="eyebrow">Comanda ta</p>
+          <Link href="/cos">Modifică coșul</Link>
+        </div>
         <div className="checkout-products">
           {lines.map(({ product, variantId, quantity }) => {
             const variant = getProductVariant(product, variantId);
@@ -359,7 +501,13 @@ export function CheckoutForm({
           </div>
           <div><span>Total</span><strong>{formatPrice(subtotal + shipping)}</strong></div>
         </div>
-        <button className="button button--primary button--full" type="submit" disabled={submitting}>
+        <button
+          className="button button--primary button--full"
+          type="submit"
+          disabled={submitting}
+          aria-describedby="checkout-submit-note"
+        >
+          {submitting && <span className="checkout-button-spinner" aria-hidden="true" />}
           {submitting
             ? paymentMethod === "stripe"
               ? "Deschidem plata securizată…"
@@ -368,7 +516,7 @@ export function CheckoutForm({
               ? "Comandă cu obligație de plată"
               : "Comandă cu obligație de plată · ramburs"}
         </button>
-        <p className="checkout-disclaimer">
+        <p className="checkout-disclaimer" id="checkout-submit-note">
           Prin apăsarea butonului trimiți o comandă care implică plata totalului
           afișat. Prețurile și stocul sunt verificate din nou înainte de
           acceptare.

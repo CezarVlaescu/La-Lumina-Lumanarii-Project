@@ -16,10 +16,17 @@ export type CartLine = {
 type StoreContextValue = {
   lines: CartLine[];
   cartOpen: boolean;
+  cartReady: boolean;
+  cartNotice: string;
   itemCount: number;
   subtotal: number;
   setCartOpen: (value: boolean) => void;
-  addProduct: (product: Product, variantId?: string) => void;
+  dismissCartNotice: () => void;
+  addProduct: (
+    product: Product,
+    variantId?: string,
+    requestedQuantity?: number,
+  ) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
 };
@@ -91,6 +98,7 @@ export function StoreProvider({
   const [lines, setLines] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [cartNotice, setCartNotice] = useState("");
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -120,10 +128,32 @@ export function StoreProvider({
     }
   }, [hydrated, lines]);
 
+  useEffect(() => {
+    function syncCart(event: StorageEvent) {
+      if (event.key !== "lll-cart") return;
+      try {
+        setLines(readStoredCart(products));
+      } catch {
+        // An invalid cart in another tab must not interrupt this one.
+      }
+    }
+
+    window.addEventListener("storage", syncCart);
+    return () => window.removeEventListener("storage", syncCart);
+  }, [products]);
+
+  useEffect(() => {
+    if (!cartNotice) return;
+    const timeout = window.setTimeout(() => setCartNotice(""), 4200);
+    return () => window.clearTimeout(timeout);
+  }, [cartNotice]);
+
   const value = useMemo<StoreContextValue>(
     () => ({
       lines,
       cartOpen,
+      cartReady: hydrated,
+      cartNotice,
       itemCount: lines.reduce((sum, line) => sum + line.quantity, 0),
       subtotal: lines.reduce(
         (sum, line) =>
@@ -132,19 +162,43 @@ export function StoreProvider({
         0,
       ),
       setCartOpen,
-      addProduct: (product, requestedVariantId) => {
+      dismissCartNotice: () => setCartNotice(""),
+      addProduct: (product, requestedVariantId, requestedQuantity = 1) => {
         const variantId =
           requestedVariantId &&
           product.variants?.some((variant) => variant.id === requestedVariantId)
             ? requestedVariantId
             : product.variants?.[0]?.id;
-        if (
-          getProductPrice(product, variantId) === null ||
-          getProductStock(product, variantId) < 1
-        ) {
+        const stock = getProductStock(product, variantId);
+        if (getProductPrice(product, variantId) === null || stock < 1) {
+          setCartNotice(`${product.name} nu mai este disponibil momentan.`);
           return;
         }
         const lineId = getCartLineId(product.slug, variantId);
+        const existingQuantity =
+          lines.find(
+            (line) =>
+              getCartLineId(line.product.slug, line.variantId) === lineId,
+          )?.quantity ?? 0;
+        const safeRequestedQuantity = Math.max(
+          1,
+          Math.min(Math.floor(requestedQuantity), 99),
+        );
+        const nextQuantity = Math.min(
+          existingQuantity + safeRequestedQuantity,
+          stock,
+          99,
+        );
+        const addedQuantity = nextQuantity - existingQuantity;
+
+        if (addedQuantity < 1) {
+          setCartNotice(
+            `Ai deja cantitatea maximă disponibilă pentru ${product.name}.`,
+          );
+          setCartOpen(true);
+          return;
+        }
+
         setLines((current) => {
           const existing = current.find(
             (line) => getCartLineId(line.product.slug, line.variantId) === lineId,
@@ -152,37 +206,56 @@ export function StoreProvider({
           if (existing) {
             return current.map((line) =>
               getCartLineId(line.product.slug, line.variantId) === lineId
-                ? { ...line, quantity: Math.min(line.quantity + 1, 99) }
+                ? { ...line, quantity: nextQuantity }
                 : line,
             );
           }
-          return [...current, { product, variantId, quantity: 1 }];
+          return [...current, { product, variantId, quantity: nextQuantity }];
         });
+        setCartNotice(
+          addedQuantity === 1
+            ? `${product.name} a fost adăugată în coș.`
+            : `${addedQuantity} bucăți din ${product.name} au fost adăugate în coș.`,
+        );
         setCartOpen(true);
       },
       updateQuantity: (lineId, quantity) => {
-        setLines((current) =>
-          quantity <= 0
-            ? current.filter(
-                (line) => getCartLineId(line.product.slug, line.variantId) !== lineId,
-              )
-            : current.map((line) =>
-                getCartLineId(line.product.slug, line.variantId) === lineId
-                  ? {
-                      ...line,
-                      quantity: Math.min(
-                        quantity,
-                        getProductStock(line.product, line.variantId),
-                        99,
-                      ),
-                    }
-                  : line,
-              ),
+        const target = lines.find(
+          (line) => getCartLineId(line.product.slug, line.variantId) === lineId,
         );
+        if (!target) return;
+        if (quantity <= 0) {
+          setLines((current) =>
+            current.filter(
+              (line) =>
+                getCartLineId(line.product.slug, line.variantId) !== lineId,
+            ),
+          );
+          setCartNotice(`${target.product.name} a fost eliminată din coș.`);
+          return;
+        }
+
+        const stock = getProductStock(target.product, target.variantId);
+        const nextQuantity = Math.min(Math.max(1, quantity), stock, 99);
+        setLines((current) =>
+          current.map((line) =>
+            getCartLineId(line.product.slug, line.variantId) === lineId
+              ? { ...line, quantity: nextQuantity }
+              : line,
+          ),
+        );
+        if (quantity > stock) {
+          setCartNotice(
+            `Pentru ${target.product.name} sunt disponibile ${stock} bucăți.`,
+          );
+        }
       },
-      clearCart: () => setLines([]),
+      clearCart: () => {
+        setLines([]);
+        setCartNotice("");
+      },
     }),
-    [cartOpen, lines],
+    [cartNotice, cartOpen, hydrated, lines],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
