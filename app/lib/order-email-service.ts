@@ -209,6 +209,8 @@ async function sendDelivery(
     delivery.kind,
     delivery.orderStatus,
   );
+  const replyTo =
+    delivery.kind === "admin_new_order" ? order.customerEmail : "";
   const now = new Date().toISOString();
 
   if (!apiKey || !from || !recipient) {
@@ -255,6 +257,7 @@ async function sendDelivery(
       body: JSON.stringify({
         from,
         to: [recipient],
+        ...(replyTo ? { reply_to: replyTo } : {}),
         subject: message.subject,
         html: message.html,
         text: message.text,

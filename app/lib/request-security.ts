@@ -18,11 +18,10 @@ export function isSameOriginMutation(request: Request) {
       process.env.URL,
     ]) {
       if (!candidate) continue;
-
       try {
         allowedOrigins.add(new URL(candidate).origin);
       } catch {
-        // Ignoră valorile URL invalide.
+        // Valorile URL invalide nu trebuie să oprească verificarea celorlalte.
       }
     }
 
@@ -76,7 +75,7 @@ export async function consumeRateLimit(
         window_start: number;
       }>("store_consume_rate_limit", {
         rate_key: key,
-        current_time: now,
+        "current_time": now,
         reset_threshold: resetThreshold,
         updated_at_value: updatedAt,
       });

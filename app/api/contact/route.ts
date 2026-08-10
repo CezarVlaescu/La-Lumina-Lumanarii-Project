@@ -1,5 +1,6 @@
 import { createContactMessage } from "../../lib/contact-repository";
 import { parseContactMessage } from "../../lib/contact-model";
+import { deliverContactMessageNotification } from "../../lib/contact-email-service";
 import {
   consumeRateLimit,
   isJsonRequestWithinLimit,
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
     const { honeypot: _honeypot, ...message } = parsed;
     void _honeypot;
     const saved = await createContactMessage(message);
+    await deliverContactMessageNotification(saved).catch(() => null);
     return Response.json({ ok: true, id: saved.id }, { status: 201 });
   } catch (error) {
     return Response.json(

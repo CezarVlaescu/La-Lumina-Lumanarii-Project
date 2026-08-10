@@ -15,7 +15,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 type AccountLoginPageProps = {
-  searchParams: Promise<{ mode?: string; returnTo?: string }>;
+  searchParams: Promise<{
+    mode?: string;
+    returnTo?: string;
+    confirmed?: string;
+  }>;
 };
 
 export default async function AccountLoginPage({
@@ -60,7 +64,15 @@ export default async function AccountLoginPage({
         : "login";
   return (
     <main className="account-auth-page page-shell">
-      <AccountAuthForm initialMode={initialMode} returnTo={returnTo} />
+      <AccountAuthForm
+        initialMode={initialMode}
+        returnTo={returnTo}
+        initialMessage={
+          params.confirmed === "1"
+            ? "Adresa de email a fost confirmată. Te poți autentifica."
+            : ""
+        }
+      />
     </main>
   );
 }

@@ -9,6 +9,7 @@ import {
   isJsonRequestWithinLimit,
   isSameOriginMutation,
 } from "../../../../lib/request-security";
+import { absoluteSiteUrl } from "../../../../lib/site-config";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       password,
       firstName,
       lastName,
+      redirectTo: absoluteSiteUrl("/cont/autentificare?confirmed=1"),
     });
     const response = NextResponse.json(
       {

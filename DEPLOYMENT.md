@@ -55,6 +55,11 @@ Variabilele Resend și Stripe pot rămâne goale până când serviciile sunt
 activate. Nu prefixa cheia `service_role` sau secretele Stripe/Resend cu
 `NEXT_PUBLIC_`.
 
+Configurația completă pentru Resend, URL-urile de redirect și șabloanele
+românești Supabase se află în `EMAIL_SETUP.md`. Domeniul și emailurile pot fi
+activate ulterior; lipsa variabilelor Resend nu blochează salvarea comenzilor
+sau a mesajelor din Contact.
+
 ## 3. Mută datele existente
 
 1. În magazinul actual deschide Admin → Infrastructură.

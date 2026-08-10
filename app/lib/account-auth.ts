@@ -36,7 +36,10 @@ type SupabaseAuthResult = {
     };
   };
   error_description?: string;
+  error?: string;
+  message?: string;
   msg?: string;
+  code?: string;
 };
 
 function bytesToBase64Url(bytes: Uint8Array) {
@@ -125,12 +128,24 @@ async function readAccountSession(token: string): Promise<AccountSession | null>
 }
 
 function authError(result: SupabaseAuthResult, fallback: string) {
-  const raw = result.error_description || result.msg || "";
+  const raw =
+    result.error_description ||
+    result.message ||
+    result.msg ||
+    result.error ||
+    result.code ||
+    "";
   if (/invalid login credentials/i.test(raw)) {
     return "Emailul sau parola nu sunt corecte.";
   }
+  if (/email not confirmed/i.test(raw)) {
+    return "Confirmă adresa de email înainte să te autentifici.";
+  }
   if (/already registered|already been registered/i.test(raw)) {
     return "Există deja un cont cu această adresă de email.";
+  }
+  if (/rate limit|too many requests/i.test(raw)) {
+    return "Au fost prea multe încercări. Reîncearcă peste câteva minute.";
   }
   if (/password/i.test(raw)) {
     return "Parola nu respectă cerințele de securitate.";
@@ -205,12 +220,17 @@ export async function registerSupabaseAccount(input: {
   password: string;
   firstName: string;
   lastName: string;
+  redirectTo?: string;
 }) {
   const config = getSupabaseConfig();
   if (!config.url || !config.anonKey) {
     throw new Error("Crearea conturilor nu este configurată complet.");
   }
-  const response = await fetch(`${config.url}/auth/v1/signup`, {
+  const signupUrl = new URL(`${config.url}/auth/v1/signup`);
+  if (input.redirectTo) {
+    signupUrl.searchParams.set("redirect_to", input.redirectTo);
+  }
+  const response = await fetch(signupUrl, {
     method: "POST",
     headers: {
       apikey: config.anonKey,

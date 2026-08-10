@@ -5,7 +5,9 @@ import {
   type EmailDeliveryKind,
   type OrderStatus,
 } from "./order-types";
+import { emailLayout, escapeHtml } from "./email-template";
 import { shippingMethodLabels } from "./shipping";
+import { absoluteSiteUrl } from "./site-config";
 
 export type OrderEmailMessage = {
   subject: string;
@@ -13,70 +15,11 @@ export type OrderEmailMessage = {
   text: string;
 };
 
-function escapeHtml(value: string | number) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function money(value: number) {
   return new Intl.NumberFormat("ro-RO", {
     style: "currency",
     currency: "RON",
   }).format(value);
-}
-
-function emailLayout({
-  title,
-  eyebrow,
-  intro,
-  content,
-  footer,
-}: {
-  title: string;
-  eyebrow: string;
-  intro: string;
-  content: string;
-  footer: string;
-}) {
-  return `<!doctype html>
-<html lang="ro">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${escapeHtml(title)}</title>
-  </head>
-  <body style="margin:0;background:#0d0810;color:#f3ecdd;font-family:Arial,Helvetica,sans-serif">
-    <div style="display:none;max-height:0;overflow:hidden;color:transparent">${escapeHtml(intro)}</div>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0d0810">
-      <tr>
-        <td align="center" style="padding:32px 14px">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;border:1px solid #49384c;background:#171019">
-            <tr>
-              <td style="padding:34px 38px 26px;border-bottom:1px solid #302432">
-                <div style="color:#d9953d;font-size:11px;letter-spacing:2px;text-transform:uppercase">${escapeHtml(eyebrow)}</div>
-                <h1 style="margin:12px 0 12px;color:#f3ecdd;font-family:Georgia,'Times New Roman',serif;font-size:38px;font-weight:400;line-height:1.08">${escapeHtml(title)}</h1>
-                <p style="margin:0;color:#b6a9a0;font-size:15px;line-height:1.7">${escapeHtml(intro)}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:30px 38px">${content}</td>
-            </tr>
-            <tr>
-              <td style="padding:22px 38px;border-top:1px solid #302432;color:#83777d;font-size:12px;line-height:1.6">
-                ${escapeHtml(footer)}
-                <div style="margin-top:8px;color:#c5a36f">La Lumina Lumânării</div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
 }
 
 function itemRows(order: AdminOrder) {
@@ -152,8 +95,19 @@ function customerConfirmation(order: AdminOrder): OrderEmailMessage {
         order.paymentMethod === "stripe"
           ? "Aceasta este confirmarea automată a comenzii plătite online."
           : "Aceasta este confirmarea automată de primire. Plata se face ramburs la curier.",
+      actions: [
+        {
+          label: "Vezi comenzile mele",
+          href: absoluteSiteUrl("/cont"),
+        },
+        {
+          label: "Înapoi în magazin",
+          href: absoluteSiteUrl("/lumanari"),
+          secondary: true,
+        },
+      ],
     }),
-    text: `${intro}\n\nNumăr comandă: ${order.orderNumber}\n\n${textItems}\n\nTotal: ${money(order.total)}\nPlată: ${paymentMethodLabels[order.paymentMethod]}\nLivrare: ${shippingMethodLabels[order.shippingMethod]} — ${order.shippingPointName ?? order.addressLine}, ${order.postalCode} ${order.city}, ${order.county}`,
+    text: `${intro}\n\nNumăr comandă: ${order.orderNumber}\n\n${textItems}\n\nTotal: ${money(order.total)}\nPlată: ${paymentMethodLabels[order.paymentMethod]}\nLivrare: ${shippingMethodLabels[order.shippingMethod]} — ${order.shippingPointName ?? order.addressLine}, ${order.postalCode} ${order.city}, ${order.county}\n\nComenzile mele: ${absoluteSiteUrl("/cont")}`,
   };
 }
 
@@ -186,8 +140,21 @@ function adminNewOrder(order: AdminOrder): OrderEmailMessage {
       intro,
       content,
       footer: "Comanda este disponibilă și în panoul de administrare.",
+      actions: [
+        {
+          label: "Deschide Admin",
+          href: absoluteSiteUrl("/admin"),
+        },
+        {
+          label: "Răspunde clientului",
+          href: `mailto:${order.customerEmail}?subject=${encodeURIComponent(
+            `Re: Comanda ${order.orderNumber}`,
+          )}`,
+          secondary: true,
+        },
+      ],
     }),
-    text: `${intro}\n\n${order.orderNumber}\nClient: ${order.customerFirstName} ${order.customerLastName}\nEmail: ${order.customerEmail}\nTelefon: ${order.customerPhone}\nTotal: ${money(order.total)}\nLivrare: ${shippingMethodLabels[order.shippingMethod]} — ${order.shippingPointName ?? order.addressLine}, ${order.postalCode} ${order.city}, ${order.county}`,
+    text: `${intro}\n\n${order.orderNumber}\nClient: ${order.customerFirstName} ${order.customerLastName}\nEmail: ${order.customerEmail}\nTelefon: ${order.customerPhone}\nTotal: ${money(order.total)}\nLivrare: ${shippingMethodLabels[order.shippingMethod]} — ${order.shippingPointName ?? order.addressLine}, ${order.postalCode} ${order.city}, ${order.county}\n\nAdministrare: ${absoluteSiteUrl("/admin")}`,
   };
 }
 
@@ -241,8 +208,14 @@ function customerStatusUpdate(
         status === "delivered"
           ? "Îți mulțumim că ai ales La Lumina Lumânării."
           : "Îți vom trimite un nou mesaj când statusul comenzii se schimbă.",
+      actions: [
+        {
+          label: "Vezi comenzile mele",
+          href: absoluteSiteUrl("/cont"),
+        },
+      ],
     }),
-    text: `${copy.title}\n\n${copy.intro}\nComanda: ${order.orderNumber}\nStatus: ${orderStatusLabels[status]}\nTotal: ${money(order.total)}`,
+    text: `${copy.title}\n\n${copy.intro}\nComanda: ${order.orderNumber}\nStatus: ${orderStatusLabels[status]}\nTotal: ${money(order.total)}\n\nComenzile mele: ${absoluteSiteUrl("/cont")}`,
   };
 }
 

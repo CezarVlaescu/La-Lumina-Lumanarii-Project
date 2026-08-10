@@ -45,26 +45,7 @@ export async function createContactMessage(
 ) {
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
-  if (isSupabaseConfigured()) {
-    await supabaseRest("contact_messages", {
-      method: "POST",
-      prefer: "return=minimal",
-      body: JSON.stringify({
-        id,
-        status: "new",
-        first_name: input.firstName,
-        last_name: input.lastName,
-        email: input.email,
-        subject: input.subject,
-        message: input.message,
-        created_at: now,
-        updated_at: now,
-      }),
-    });
-    return { id };
-  }
-
-  await getDb().insert(contactMessages).values({
+  const saved: ContactMessage = {
     id,
     status: "new",
     firstName: input.firstName,
@@ -74,8 +55,30 @@ export async function createContactMessage(
     message: input.message,
     createdAt: now,
     updatedAt: now,
+  };
+  if (isSupabaseConfigured()) {
+    await supabaseRest("contact_messages", {
+      method: "POST",
+      prefer: "return=minimal",
+      body: JSON.stringify({
+        id: saved.id,
+        status: saved.status,
+        first_name: saved.firstName,
+        last_name: saved.lastName,
+        email: saved.email,
+        subject: saved.subject,
+        message: saved.message,
+        created_at: saved.createdAt,
+        updated_at: saved.updatedAt,
+      }),
+    });
+    return saved;
+  }
+
+  await getDb().insert(contactMessages).values({
+    ...saved,
   });
-  return { id };
+  return saved;
 }
 
 export async function getAdminContactMessages() {

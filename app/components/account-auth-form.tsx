@@ -9,15 +9,17 @@ type AuthMode = "login" | "register" | "recover";
 export function AccountAuthForm({
   initialMode,
   returnTo,
+  initialMessage = "",
 }: {
   initialMode: AuthMode;
   returnTo: string;
+  initialMessage?: string;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessage);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
