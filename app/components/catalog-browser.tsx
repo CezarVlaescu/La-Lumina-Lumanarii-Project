@@ -109,8 +109,16 @@ export function CatalogBrowser({
         </div>
       ) : (
         <div className="no-results">
-          <h2>Niciun produs nu se potrivește încă.</h2>
-          <p>Încearcă un alt cuvânt sau revino la toate tipurile de produse.</p>
+          <h2>
+            {activeTheme
+              ? `Colecția ${activeTheme.name} este în pregătire.`
+              : "Niciun produs nu se potrivește încă."}
+          </h2>
+          <p>
+            {activeTheme
+              ? "Nu există încă produse publicate în această colecție. Revino curând sau descoperă toate lumânările disponibile."
+              : "Încearcă un alt cuvânt sau revino la toate tipurile de produse."}
+          </p>
           <button className="button button--outline-gold" onClick={() => { setQuery(""); setCategory("Toate"); setCollection(""); setTheme(""); }}>
             Resetează filtrele
           </button>
