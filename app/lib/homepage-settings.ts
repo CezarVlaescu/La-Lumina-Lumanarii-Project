@@ -22,17 +22,17 @@ const SETTINGS_KEY = "homepage-settings";
 
 export const defaultHomepageSettings: HomepageSettings = {
   weeklyOffer: {
-    enabled: true,
-    productSlug: "turturele-de-paste",
+    enabled: false,
+    productSlug: "bradut-alb-perlat",
     discountPercent: 0,
     startsAt: "",
     endsAt: "",
-    eyebrow: "Oferta săptămânii",
-    title: "O piesă aleasă din atelier.",
+    eyebrow: "Recomandarea săptămânii",
+    title: "Un model ales din catalog.",
     description:
-      "În fiecare săptămână punem în lumină o creație pe care o poți descoperi mai aproape, împreună cu povestea și variantele ei.",
-    badge: "Alegerea săptămânii",
-    ctaLabel: "Descoperă oferta",
+      "Descoperă detaliile, dimensiunile, prețul și disponibilitatea modelului recomandat.",
+    badge: "Recomandarea săptămânii",
+    ctaLabel: "Vezi produsul",
   },
 };
 

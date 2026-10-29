@@ -214,7 +214,7 @@ export function StoreProvider({
         });
         setCartNotice(
           addedQuantity === 1
-            ? `${product.name} a fost adăugată în coș.`
+            ? `Produsul ${product.name} a fost adăugat în coș.`
             : `${addedQuantity} bucăți din ${product.name} au fost adăugate în coș.`,
         );
         setCartOpen(true);
@@ -231,7 +231,7 @@ export function StoreProvider({
                 getCartLineId(line.product.slug, line.variantId) !== lineId,
             ),
           );
-          setCartNotice(`${target.product.name} a fost eliminată din coș.`);
+          setCartNotice(`Produsul ${target.product.name} a fost eliminat din coș.`);
           return;
         }
 

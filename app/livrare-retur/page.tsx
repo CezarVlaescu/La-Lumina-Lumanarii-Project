@@ -71,8 +71,8 @@ export default async function ShippingPage() {
             </p>
             <p>
               Termenul efectiv de transport depinde de curier și de localitate.
-              Datele de urmărire vor fi transmise după expediere atunci când
-              integrarea de curier este activă.
+              După expediere, clientul primește informațiile disponibile pentru
+              urmărirea coletului.
             </p>
           </div>
         </section>
@@ -102,20 +102,19 @@ export default async function ShippingPage() {
           <span>04</span>
           <div>
             <h2>Adresa și notificarea returului</h2>
-            <p>
-              Trimite notificarea la{" "}
-              {returnEmail ? (
-                <a href={`mailto:${returnEmail}`}>{returnEmail}</a>
-              ) : (
-                <strong>[emailul de retur va fi completat înainte de lansare]</strong>
-              )}
-              . Produsele se expediază la{" "}
-              <strong>
-                {profile.returnAddress ||
-                  "[adresa de retur va fi completată înainte de lansare]"}
-              </strong>
-              . Nu trimite coletul cu ramburs fără o confirmare prealabilă.
-            </p>
+            {returnEmail && profile.returnAddress ? (
+              <p>
+                Trimite notificarea la{" "}
+                <a href={`mailto:${returnEmail}`}>{returnEmail}</a>. Produsele
+                se expediază la <strong>{profile.returnAddress}</strong>. Nu
+                trimite coletul cu ramburs fără o confirmare prealabilă.
+              </p>
+            ) : (
+              <p>
+                Datele pentru retur vor fi publicate înainte de deschiderea
+                comenzilor reale.
+              </p>
+            )}
           </div>
         </section>
 
@@ -152,11 +151,6 @@ export default async function ShippingPage() {
           </div>
         </section>
 
-        <p className="legal-note">
-          Datele de contact și adresa de retur se completează automat din Admin.
-          Politica va fi verificată juridic împreună cu datele firmei înainte de
-          lansarea publică.
-        </p>
       </article>
     </main>
   );

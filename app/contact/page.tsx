@@ -30,11 +30,12 @@ export default async function ContactPage() {
           <p className="eyebrow">Detalii de contact</p>
           <h2>Răspundem cu grijă, de obicei în aceeași zi.</h2>
           <div className="contact-details">
-            <div><span>Email</span>{email ? <a href={`mailto:${email}`}>{email}</a> : <p>Va fi afișat înainte de lansare</p>}</div>
-            <div><span>Telefon</span>{profile.phone ? <a href={`tel:${profile.phone.replace(/\s/g, "")}`}>{profile.phone}</a> : <p>Va fi afișat înainte de lansare</p>}</div>
+            {email && <div><span>Email</span><a href={`mailto:${email}`}>{email}</a></div>}
+            {profile.phone && <div><span>Telefon</span><a href={`tel:${profile.phone.replace(/\s/g, "")}`}>{profile.phone}</a></div>}
+            {!email && !profile.phone && <div><span>Mesaj online</span><p>Folosește formularul alăturat</p></div>}
             <div><span>Program</span><p>{profile.customerServiceHours}</p></div>
           </div>
-          {!email && <p className="contact-note">Datele de contact se completează din panoul de administrare înainte ca magazinul să devină public.</p>}
+          {!email && <p className="contact-note">Îți răspundem la adresa de email introdusă în formular.</p>}
         </div>
         <ContactForm />
       </section>
@@ -42,10 +43,10 @@ export default async function ContactPage() {
         <p className="eyebrow">Întrebări frecvente</p>
         <h2>Poate găsești răspunsul chiar aici.</h2>
         <div className="faq__grid">
-          <details open><summary>Când vor putea fi comandate produsele?</summary><p>După completarea prețurilor, dimensiunilor și stocurilor și conectarea checkout-ului real.</p></details>
-          <details><summary>Există variante de culoare?</summary><p>Da. Omulețul de turtă dulce este disponibil în maro deschis, maro închis și alb. Varianta se alege direct în pagina produsului.</p></details>
-          <details><summary>Fotografiile prezintă produsele reale?</summary><p>Da. Imaginile din galeriile celor trei produse sunt realizate cu piesele din colecția de Crăciun.</p></details>
-          <details><summary>Pot cere o altă combinație de culori?</summary><p>Opțiunile de personalizare vor fi stabilite înainte de lansare și afișate clar în fiecare pagină de produs.</p></details>
+          <details open><summary>Ce produse pot fi comandate?</summary><p>Produsele care afișează preț, stoc și butonul „Adaugă în coș” sunt disponibile pentru comandă.</p></details>
+          <details><summary>Există variante de culoare?</summary><p>Da, pentru anumite modele. Variantele disponibile se aleg direct din pagina produsului.</p></details>
+          <details><summary>Fotografiile prezintă produsele reale?</summary><p>Da. Fotografiile din paginile produselor prezintă piesele realizate în atelier.</p></details>
+          <details><summary>Pot cere o altă combinație de culori?</summary><p>Scrie-ne prin formular și îți confirmăm dacă modelul poate fi personalizat.</p></details>
         </div>
       </section>
     </main>

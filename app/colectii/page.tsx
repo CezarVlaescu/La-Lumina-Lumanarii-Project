@@ -8,7 +8,12 @@ import {
   specialThemeCollections,
 } from "../lib/catalog";
 
-export const metadata: Metadata = { title: "Colecții" };
+export const metadata: Metadata = {
+  title: "Colecții de lumânări",
+  description:
+    "Descoperă colecțiile sezoniere și tematice de lumânări realizate manual La Lumina Lumânării.",
+  alternates: { canonical: "/colectii" },
+};
 
 export default function CollectionsPage() {
   return (
@@ -16,9 +21,9 @@ export default function CollectionsPage() {
       <header className="page-hero">
         <div className="page-hero__inner page-shell">
           <div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Colecții</span></div>
-          <p className="eyebrow eyebrow--gold">Anotimpuri, sărbători și povești</p>
-          <h1>O colecție pentru fiecare moment al anului.</h1>
-          <p className="page-hero__lead">Fiecare anotimp are atmosfera lui, iar sărbătorile din interiorul său primesc o poveste vizuală separată.</p>
+          <p className="eyebrow eyebrow--gold">Anotimpuri și sărbători</p>
+          <h1>Colecții pentru fiecare perioadă a anului.</h1>
+          <p className="page-hero__lead">Modelele sunt grupate pe anotimpuri și teme, ca să găsești mai ușor lumânarea potrivită.</p>
         </div>
       </header>
 
@@ -26,9 +31,9 @@ export default function CollectionsPage() {
         <div className="section-heading section-heading--split">
           <div>
             <p className="eyebrow">Colecții sezoniere</p>
-            <h2>Începe cu anotimpul.</h2>
+            <h2>Alege un anotimp.</h2>
           </div>
-          <p className="seasonal-collections__lead">Iarna înseamnă zăpadă și seri liniștite; Crăciunul adaugă brad, decorațiuni și luminițe. Aceeași diferență se păstrează în fiecare sezon.</p>
+          <p className="seasonal-collections__lead">Fiecare colecție reunește formele și culorile potrivite sezonului, iar subcolecțiile separă sărbătorile și temele speciale.</p>
         </div>
         <div className="seasonal-collection-grid">
           {seasonalCollectionGroups.map((group) => (
@@ -73,7 +78,7 @@ export default function CollectionsPage() {
             <article id={theme.slug} key={theme.slug}>
               <span aria-hidden="true">{index === 0 ? "♞" : "✦"}</span>
               <div><h3>{theme.name}</h3><p>{theme.description}</p></div>
-              <small>Produsele vor fi adăugate din catalogul real</small>
+              <small>Colecție în pregătire</small>
             </article>
           ))}
         </div>
@@ -82,7 +87,7 @@ export default function CollectionsPage() {
       <section className="collections-list page-shell">
         <div className="section-heading">
           <p className="eyebrow">Colecții evidențiate</p>
-          <h2>Primele produse ale magazinului.</h2>
+          <h2>Colecții evidențiate.</h2>
         </div>
         {collections.map((collection, index) => (
           <article className={index % 2 ? "collection-feature collection-feature--reverse" : "collection-feature"} key={collection.name}>
@@ -95,9 +100,9 @@ export default function CollectionsPage() {
               <h2>{collection.name}</h2>
               <p>{collection.description}</p>
               <div className="collection-feature__mood">
-                <span>{index === 0 ? "calm" : index === 1 ? "generozitate" : "profunzime"}</span>
-                <span>{index === 0 ? "catifelat" : index === 1 ? "auriu" : "verde"}</span>
-                <span>{index === 0 ? "intim" : index === 1 ? "luminos" : "misterios"}</span>
+                <span>{index === 0 ? "forme delicate" : index === 1 ? "idei de cadou" : "forme botanice"}</span>
+                <span>{index === 0 ? "culori pastel" : index === 1 ? "ambalare atentă" : "nuanțe naturale"}</span>
+                <span>finisate manual</span>
               </div>
               <Link className="button button--outline-gold" href={collection.href}>
                 Vezi colecția <ArrowIcon />

@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Ghid de îngrijire",
+  description:
+    "Recomandări pentru arderea corectă și folosirea în siguranță a lumânărilor.",
+  alternates: { canonical: "/ingrijire" },
+};
 
 export default function CarePage() {
   return (
     <main>
-      <header className="page-hero"><div className="page-hero__inner page-shell"><div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Îngrijire</span></div><p className="eyebrow eyebrow--gold">Un ritual care durează</p><h1>Ghid de îngrijire.</h1></div></header>
+      <header className="page-hero"><div className="page-hero__inner page-shell"><div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Îngrijire</span></div><p className="eyebrow eyebrow--gold">Folosire corectă și sigură</p><h1>Ghid de îngrijire.</h1></div></header>
       <section className="care-grid page-shell">
         <article><span>01</span><h2>Prima aprindere</h2><p>Lasă ceara să se topească până la marginea recipientului. Astfel eviți formarea unui tunel și păstrezi arderea uniformă.</p></article>
         <article><span>02</span><h2>Scurtează fitilul</h2><p>Înainte de fiecare aprindere, taie fitilul la aproximativ 5 mm. Flacăra va rămâne curată și calmă.</p></article>
@@ -13,4 +21,5 @@ export default function CarePage() {
     </main>
   );
 }
+
 

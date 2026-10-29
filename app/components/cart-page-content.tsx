@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   formatPrice,
+  formatWeight,
   getProductPrice,
   getProductStock,
   getProductVariant,
@@ -56,8 +57,8 @@ export function CartPageContent({
     return (
       <div className="cart-page-empty">
         <span>♢</span>
-        <h2>Încă nu ai ales lumina serii.</h2>
-        <p>Descoperă colecțiile și alege lumânarea care spune povestea ta.</p>
+        <h2>Coșul este gol.</h2>
+        <p>Descoperă produsele disponibile și alege modelul preferat.</p>
         <Link className="button button--primary" href="/lumanari">Vezi lumânările</Link>
       </div>
     );
@@ -86,7 +87,7 @@ export function CartPageContent({
             <div>
               <p>{product.collection}</p>
               <Link href={`/lumanari/${product.slug}`}><h2>{product.name}</h2></Link>
-              <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${product.weight}` : ""}</span>
+              <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${formatWeight(product.weight)}` : ""}</span>
               <small className={stock <= 3 ? "cart-stock cart-stock--low" : "cart-stock"}>
                 {stock <= 3
                   ? `${stock} ${stock === 1 ? "bucată disponibilă" : "bucăți disponibile"}`

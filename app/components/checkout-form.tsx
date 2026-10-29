@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   formatPrice,
+  formatWeight,
   getProductPrice,
   getProductVariant,
 } from "../lib/catalog";
@@ -162,7 +163,7 @@ export function CheckoutForm({
       <div className="checkout-success">
         <span className="checkout-success__icon">✓</span>
         <p className="eyebrow eyebrow--gold">Comandă înregistrată</p>
-        <h1>Mulțumim. Lumina ta este aproape.</h1>
+        <h1>Mulțumim. Comanda a fost înregistrată.</h1>
         <div className="checkout-success__order">
           <span>Numărul comenzii</span>
           <strong>{completed.orderNumber}</strong>
@@ -231,7 +232,7 @@ export function CheckoutForm({
       <div className="checkout-fields">
         <div className="checkout-heading">
           <p className="eyebrow">Checkout securizat</p>
-          <h1>Unde trimitem lumina?</h1>
+          <h1>Date pentru livrare.</h1>
         </div>
         <section className="form-section">
           <div className="form-section__heading"><span>01</span><div><h2>Date de contact</h2><p>Pentru confirmarea și actualizările comenzii.</p></div></div>
@@ -437,12 +438,11 @@ export function CheckoutForm({
                 datele cardului
               </small>
             </span>
-            <i>{stripeEnabled ? "Mod test" : "Neactivat"}</i>
+            <i>{stripeEnabled ? "Disponibil" : "Indisponibil"}</i>
           </label>
           {!stripeEnabled && (
             <p className="payment-setup-note">
-              Plata online este implementată și va deveni selectabilă după
-              conectarea cheilor Stripe de test.
+              Plata online nu este disponibilă momentan. Poți plăti ramburs.
             </p>
           )}
           {paymentCancelled && (
@@ -487,7 +487,7 @@ export function CheckoutForm({
             return (
             <div className="checkout-product" key={getCartLineId(product.slug, variantId)}>
               <div><Image src={variant?.image ?? product.image} alt="" fill unoptimized /><span>{quantity}</span></div>
-              <p><strong>{product.name}</strong><small>{variant ? `Culoare: ${variant.name}` : product.weight}</small></p>
+              <p><strong>{product.name}</strong><small>{variant ? `Culoare: ${variant.name}` : formatWeight(product.weight)}</small></p>
               <b>{formatPrice((getProductPrice(product, variantId) ?? 0) * quantity)}</b>
             </div>
             );

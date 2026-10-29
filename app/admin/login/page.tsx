@@ -23,7 +23,7 @@ export default async function AdminLoginPage() {
         </Link>
         <p className="eyebrow eyebrow--gold">Acces protejat</p>
         <h1>Administrarea magazinului</h1>
-        <p>Folosește contul de administrator creat în Supabase.</p>
+        <p>Autentifică-te pentru a administra produsele și comenzile.</p>
         <AdminLoginForm />
         <Link className="text-link" href="/">← Înapoi în magazin</Link>
       </section>

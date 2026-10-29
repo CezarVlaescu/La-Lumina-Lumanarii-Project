@@ -48,7 +48,7 @@ export function ContactForm() {
     <div className="contact-success">
       <span>✓</span>
       <h2>Mesajul a fost trimis.</h2>
-      <p>Îl găsim direct în panoul magazinului și îți vom răspunde folosind adresa oferită.</p>
+      <p>Am înregistrat solicitarea și îți vom răspunde folosind adresa oferită.</p>
       <button className="button button--outline-gold" onClick={() => setSent(false)}>Trimite alt mesaj</button>
     </div>
   ) : (

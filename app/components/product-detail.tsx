@@ -6,6 +6,7 @@ import { useState, type CSSProperties } from "react";
 import type { Product } from "../lib/catalog";
 import {
   formatPrice,
+  formatWeight,
   getProductCompareAtPrice,
   getProductPrice,
   getProductStock,
@@ -144,7 +145,7 @@ export function ProductDetail({ product }: { product: Product }) {
           <div className="product-specs">
             <div><span>Tip</span><strong>{product.category}</strong></div>
             <div><span>Colecție</span><strong>{product.collection}</strong></div>
-            {product.weight && <div><span>Greutate</span><strong>{product.weight}</strong></div>}
+            {product.weight && <div><span>Greutate</span><strong>{formatWeight(product.weight)}</strong></div>}
             {product.burnTime && <div><span>Timp de ardere</span><strong>{product.burnTime}</strong></div>}
           </div>
           {selectedPrice !== null && selectedStock > 0 ? (
@@ -214,7 +215,7 @@ export function ProductDetail({ product }: { product: Product }) {
           <div className="product-accordions">
             <details open>
               <summary>Despre produs</summary>
-              <p>Fotografiile prezintă produsul real. Greutatea, dimensiunile și compoziția exactă vor fi completate înainte de lansarea magazinului.</p>
+              <p>Fotografiile prezintă produsul real. Fiind realizată manual, fiecare piesă poate avea mici diferențe de nuanță și finisaj.</p>
             </details>
             <details>
               <summary>Cum îngrijești lumânarea</summary>

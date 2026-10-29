@@ -37,12 +37,12 @@ export default async function PrivacyPage() {
         <h2>1. Cine este operatorul datelor</h2>
         <p>
           Operatorul este{" "}
-          <strong>{profile.legalName || "[denumirea juridică va fi completată înainte de lansare]"}</strong>,
+          <strong>{profile.legalName || "comerciantul ale cărui date vor fi publicate înainte de lansare"}</strong>,
           cu sediul în{" "}
           {profile.registeredAddress ||
-            "[sediul social va fi completat înainte de lansare]"}.
+            "adresa care va fi publicată înainte de lansare"}.
           Pentru întrebări sau exercitarea drepturilor poți scrie la{" "}
-          {contact ? <a href={`mailto:${contact}`}>{contact}</a> : "[emailul dedicat va fi completat înainte de lansare]"}.
+          {contact ? <a href={`mailto:${contact}`}>{contact}</a> : "formularul de contact"}.
         </p>
 
         <h2>2. Ce date prelucrăm</h2>
@@ -116,10 +116,6 @@ export default async function PrivacyPage() {
           externe sunt explicate în <Link href="/cookie-uri">Politica de cookie-uri</Link>.
         </p>
 
-        <p className="legal-note">
-          Documentul se completează automat cu datele firmei din Admin și va fi
-          verificat juridic înainte ca magazinul să fie deschis publicului.
-        </p>
       </article>
     </main>
   );

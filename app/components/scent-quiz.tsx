@@ -2,8 +2,30 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { products } from "../lib/catalog";
+import type { Product } from "../lib/catalog";
 import { ArrowIcon } from "./icons";
+
+const recommendationSlugs = [
+  [
+    "casuta-lui-mos-craciun",
+    "casuta-bradut-nins",
+    "poveste-de-iarna",
+    "bradut-alb-perlat",
+    "bradut-verde-padure",
+  ],
+  [
+    "omulet-de-turta-dulce",
+    "trenuletul-lui-mos-craciun",
+    "cadou-de-craciun",
+    "saculet-de-craciun-ren",
+  ],
+  [
+    "canita-de-craciun",
+    "glob-de-craciun-cu-capac",
+    "saculet-de-craciun-brad",
+    "bradut-alb-perlat",
+  ],
+] as const;
 
 const questions = [
   {
@@ -32,7 +54,7 @@ const questions = [
   },
 ] as const;
 
-export function ScentQuiz() {
+export function ScentQuiz({ products }: { products: Product[] }) {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState([0, 0, 0]);
 
@@ -43,7 +65,24 @@ export function ScentQuiz() {
 
   if (step >= questions.length) {
     const best = scores.indexOf(Math.max(...scores));
-    const product = products[best];
+    const product =
+      recommendationSlugs[best]
+        .map((slug) => products.find((item) => item.slug === slug))
+        .find((item): item is Product => Boolean(item)) ?? products[0];
+
+    if (!product) {
+      return (
+        <div className="quiz-result">
+          <p className="eyebrow eyebrow--gold">Ghid în pregătire</p>
+          <h1>Mai adăugăm câteva produse.</h1>
+          <p>Revino după completarea colecției sau vezi modelele disponibile acum.</p>
+          <Link className="button button--primary" href="/lumanari">
+            Vezi lumânările <ArrowIcon />
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div className="quiz-result">
         <p className="eyebrow eyebrow--gold">Potrivirea ta</p>
@@ -51,7 +90,7 @@ export function ScentQuiz() {
         <p>{product.description}</p>
         <div className="quiz-result__notes">{product.details.map((detail) => <span key={detail}>{detail}</span>)}</div>
         <Link className="button button--primary" href={`/lumanari/${product.slug}`}>Descoperă lumânarea <ArrowIcon /></Link>
-        <button className="text-link" onClick={() => { setStep(0); setScores([0, 0, 0]); }}>Reia ritualul</button>
+        <button className="text-link" onClick={() => { setStep(0); setScores([0, 0, 0]); }}>Reia ghidul</button>
       </div>
     );
   }

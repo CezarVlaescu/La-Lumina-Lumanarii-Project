@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   formatPrice,
+  formatWeight,
   getProductPrice,
   getProductStock,
   getProductVariant,
@@ -55,7 +56,7 @@ function Header({
           Livrare gratuită la comenzi de minimum{" "}
           {freeShippingThreshold.toLocaleString("ro-RO")} lei
         </span>
-        <span className="announcement__extra">• Ambalare de cadou gratuită</span>
+        <span className="announcement__extra">• Ambalare atentă pentru fiecare comandă</span>
       </div>
       <header className="site-header">
         <Link className="brand" href="/" aria-label="La Lumina Lumânării, pagina principală">
@@ -93,8 +94,8 @@ function Header({
             <div className="collections-menu">
               <div className="collections-menu__intro">
                 <p className="eyebrow eyebrow--gold">Colecții</p>
-                <h2>O lumină pentru fiecare anotimp.</h2>
-                <p>Alege colecția mare sau mergi direct la o sărbătoare ori la o temă specială.</p>
+                <h2>Colecții pentru fiecare anotimp.</h2>
+                <p>Alege un sezon sau mergi direct la o sărbătoare ori la o temă specială.</p>
                 <Link className="text-link" href="/colectii">Vezi toate colecțiile →</Link>
               </div>
               <div className="collections-menu__content">
@@ -234,7 +235,7 @@ function Header({
             {accountViewer ? "Contul meu" : "Intră sau creează cont"}
           </Link>
         </nav>
-        <p>Aprinde un moment doar al tău.</p>
+        <p>Lumânări realizate manual, pentru acasă și cadouri.</p>
       </div>
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Închide meniul" />}
     </>
@@ -281,7 +282,7 @@ function CartDrawer() {
       >
         <div className="cart-drawer__header">
           <div>
-            <p className="eyebrow">Ritualul tău</p>
+            <p className="eyebrow">Coș de cumpărături</p>
             <h2>Coșul tău</h2>
           </div>
           <button ref={closeButtonRef} className="icon-button" onClick={() => setCartOpen(false)} aria-label="Închide coșul">
@@ -297,8 +298,8 @@ function CartDrawer() {
           ) : lines.length === 0 ? (
             <div className="empty-cart">
               <span className="empty-cart__flame">♢</span>
-              <h3>Coșul așteaptă lumină.</h3>
-              <p>Alege lumânarea care va da tonul următoarei tale seri.</p>
+              <h3>Coșul este gol.</h3>
+              <p>Vezi produsele disponibile și adaugă modelul preferat.</p>
               <Link className="button button--primary" href="/lumanari" onClick={() => setCartOpen(false)}>
                 Descoperă lumânările
               </Link>
@@ -325,9 +326,11 @@ function CartDrawer() {
                   </div>
                   <div className="cart-line__info">
                     <Link href={`/lumanari/${product.slug}`} onClick={() => setCartOpen(false)}>{product.name}</Link>
-                    <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${product.weight}` : ""}</span>
+                    <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${formatWeight(product.weight)}` : ""}</span>
                     <small className={stock <= 3 ? "cart-stock cart-stock--low" : "cart-stock"}>
-                      {stock <= 3 ? `${stock} disponibile` : "În stoc"}
+                      {stock <= 3
+                        ? `${stock} ${stock === 1 ? "bucată disponibilă" : "bucăți disponibile"}`
+                        : "În stoc"}
                     </small>
                     <div className="quantity">
                       <button type="button" onClick={() => updateQuantity(lineId, quantity - 1)} aria-label={`Scade cantitatea pentru ${product.name}`}>−</button>
@@ -399,7 +402,7 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
           <Link href="/lumanari">Toate lumânările</Link>
           <Link href="/colectii">Colecții</Link>
           <Link href="/lumanari?sort=new">Noutăți</Link>
-          <Link href="/lumanari?gift=true">Cadouri</Link>
+          <Link href="/lumanari?tema=craciun">Colecția de Crăciun</Link>
         </div>
         <div>
           <h3>Ajutor</h3>
@@ -421,8 +424,8 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
       </div>
       <div className="footer__bottom page-shell">
         <span>© 2026 {storeProfile.brandName || "La Lumina Lumânării"}</span>
-        <span>{legalSummary || "Datele comerciantului se completează înainte de lansare."}</span>
-        <span>Creat cu grijă, aprins cu sens.</span>
+        <span>{legalSummary || "Magazin în pregătire pentru lansare."}</span>
+        <span>Realizate manual, în loturi mici.</span>
       </div>
     </footer>
   );

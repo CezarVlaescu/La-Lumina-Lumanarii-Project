@@ -9,7 +9,6 @@ const staticRoutes = [
   "/lumanari",
   "/colectii",
   "/poveste",
-  "/ghid-parfum",
   "/ingrijire",
   "/contact",
   "/livrare-retur",
@@ -21,8 +20,11 @@ const staticRoutes = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getStoreProducts();
+  const routes = products.length >= 3
+    ? [...staticRoutes, "/ghid-parfum"]
+    : staticRoutes;
   return [
-    ...staticRoutes.map((route) => ({
+    ...routes.map((route) => ({
       url: absoluteSiteUrl(route),
       changeFrequency: route === "/" ? "weekly" as const : "monthly" as const,
       priority: route === "/" ? 1 : route === "/lumanari" ? 0.9 : 0.6,

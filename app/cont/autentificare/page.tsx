@@ -37,16 +37,16 @@ export default async function AccountLoginPage({
       <main className="account-auth-page page-shell">
         <section className="account-auth-card">
           <p className="eyebrow eyebrow--gold">Cont securizat</p>
-          <h1>Continuă cu identitatea ta ChatGPT.</h1>
+          <h1>Intră în cont.</h1>
           <p>
-            În versiunea finală Netlify, membrii vor folosi email și parolă.
-            Aici autentificarea sigură este furnizată de platforma magazinului.
+            Autentifică-te pentru a vedea comenzile și datele salvate pentru
+            checkout.
           </p>
           <Link
             className="button button--primary button--full"
             href={accountSignInPath(returnTo)}
           >
-            Continuă în siguranță
+            Continuă
           </Link>
           <Link className="text-link text-link--center" href="/">
             Înapoi în magazin

@@ -37,7 +37,7 @@ export default async function AccountPage() {
               className="button button--primary"
               href={accountSignInPath("/cont")}
             >
-              {usesSupabase ? "Intră în cont" : "Continuă cu ChatGPT"}
+              Intră în cont
             </Link>
             {usesSupabase && (
               <Link
@@ -48,10 +48,6 @@ export default async function AccountPage() {
               </Link>
             )}
           </div>
-          <small>
-            Sunt disponibile doar rolurile Membru și Administrator. Conturile
-            noi primesc automat rolul Membru.
-          </small>
         </section>
         <aside>
           <span>01</span>

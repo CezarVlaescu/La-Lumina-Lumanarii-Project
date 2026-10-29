@@ -18,9 +18,9 @@ export default async function CandlesPage() {
       <header className="page-hero">
         <div className="page-hero__inner page-shell">
           <div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Lumânări</span></div>
-          <p className="eyebrow eyebrow--gold">Catalogul nostru</p>
-          <h1>Alege lumina care spune povestea ta.</h1>
-          <p className="page-hero__lead">Piese decorative lucrate și pictate manual, disponibile în colecții sezoniere și variante atent finisate.</p>
+          <p className="eyebrow eyebrow--gold">Catalog</p>
+          <h1>Lumânări realizate manual.</h1>
+          <p className="page-hero__lead">Vezi modelele disponibile, prețul, stocul și detaliile fiecărei lumânări.</p>
         </div>
       </header>
       <CatalogBrowserFromUrl products={products} />

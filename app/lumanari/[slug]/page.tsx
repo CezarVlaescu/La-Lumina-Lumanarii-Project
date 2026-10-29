@@ -94,7 +94,7 @@ export default async function CandleProductPage({ params }: ProductPageProps) {
       <ProductDetail product={product} />
       <section className="section page-shell related-products">
         <div className="section-heading section-heading--split">
-          <div><p className="eyebrow">Continuă ritualul</p><h2>S-ar putea să-ți placă și.</h2></div>
+          <div><p className="eyebrow">Produse similare</p><h2>S-ar putea să-ți placă și.</h2></div>
         </div>
         <div className="product-grid">{related.map((item) => <ProductCard product={item} key={item.slug} />)}</div>
       </section>

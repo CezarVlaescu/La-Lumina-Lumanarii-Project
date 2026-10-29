@@ -14,7 +14,7 @@ export default async function CartPage() {
       <header className="page-hero page-hero--compact">
         <div className="page-hero__inner page-shell">
           <div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Coș</span></div>
-          <p className="eyebrow eyebrow--gold">Ritualul tău</p>
+          <p className="eyebrow eyebrow--gold">Produsele tale</p>
           <h1>Coșul de cumpărături.</h1>
         </div>
       </header>
@@ -24,3 +24,4 @@ export default async function CartPage() {
     </main>
   );
 }
+

@@ -506,7 +506,7 @@ export const products: Product[] = [
     subtitle: "Lumânare decorativă · alb sidefat",
     description:
       "Un brăduț alb cu reflexe sidefate și textură bogată, inspirat de zăpada care strălucește în lumina sărbătorilor.",
-    price: null,
+    price: 20,
     image: "/images/products/christmas/final-collection/tree-white-01-festive.png",
     gallery: [
       "/images/products/christmas/final-collection/tree-white-01-festive.png",
@@ -514,9 +514,14 @@ export const products: Product[] = [
     ],
     category: "Decorativă",
     collection: "Crăciun",
+    burnTime: "aproximativ 24 ore",
+    weight: "350",
     details: ["alb sidefat", "textură bogată", "aspect de zăpadă"],
     themes: ["iarna", "craciun"],
     tag: "Nou",
+    stock: 1,
+    status: "published",
+    featured: true,
   },
 ];
 
@@ -674,4 +679,27 @@ export function getProductStock(product: Product, variantId?: string) {
 export function formatPrice(value: number | null) {
   if (value === null) return "Preț în curând";
   return `${value.toLocaleString("ro-RO")} lei`;
+}
+
+export function formatWeight(value?: string) {
+  const weight = value?.trim();
+  if (!weight) return "";
+  return /^\d+(?:[.,]\d+)?$/.test(weight) ? `${weight} g` : weight;
+}
+
+export function isStorefrontProductComplete(product: Product) {
+  const hasPrice = product.variants?.length
+    ? product.variants.every(
+        (variant) => (variant.price ?? product.price ?? 0) > 0,
+      )
+    : (product.price ?? 0) > 0;
+
+  return Boolean(
+    hasPrice &&
+      product.name.trim() &&
+      product.description.trim() &&
+      product.image.trim() &&
+      product.weight?.trim() &&
+      product.burnTime?.trim(),
+  );
 }

@@ -1,14 +1,14 @@
 # La Lumina Lumânării
 
-Magazin online React pentru lumânări artizanale, construit în direcția vizuală
-„Ritual nocturn”: mov închis, lumină caldă și accente aurii.
+Magazin online React pentru lumânări artizanale, cu o direcție vizuală în mov
+închis, lumină caldă și accente aurii.
 
-Versiunea curentă este **V1.15**. Include magazinul public, catalogul cu variante,
+Versiunea curentă este **V1.16.0**. Include magazinul public, catalogul cu variante,
 coșul persistent, checkout-ul cu ramburs și Stripe, administrarea comenzilor și
 stocului, livrarea configurabilă, paginile legale, centrul de lansare, backupul
 portabil, adaptorul Supabase și autentificarea Membru/Administrator. Homepage-ul
-urmărește acum tema sezonieră activă, afișează colecția relevantă, cele mai
-vândute produse și o ofertă săptămânală configurabilă din Admin. Reducerea
+urmărește tema sezonieră activă, afișează colecția relevantă, recomandări sau
+vânzări reale și o ofertă săptămânală configurabilă din Admin. Reducerea
 setată pentru ofertă este aplicată consecvent în catalog, coș și checkout.
 Emailurile tranzacționale au acum identitatea vizuală a magazinului, acțiuni
 directe, `Reply-To` către client și notificări pentru formularul Contact.
@@ -17,7 +17,8 @@ sunt pregătite în `supabase/email-templates`; activarea este descrisă în
 `EMAIL_SETUP.md`. Coșul și checkoutul verifică acum limitele reale de stoc,
 afișează feedback clar, evită stările false înainte de încărcarea coșului și
 păstrează aceeași încercare de checkout la erorile de rețea pentru a preveni
-comenzile duplicate.
+comenzile duplicate. Produsele incomplete nu sunt publicate, iar checkout-ul
+rămâne disponibil în perioada în care datele comerciantului sunt completate.
 
 ## Cerințe
 
@@ -73,6 +74,7 @@ validarea artefactului de producție.
 - **V1.13** — homepage dinamic, bestseller-uri și ofertă săptămânală din Admin
 - **V1.14** — emailuri finisate, notificări Contact și șabloane Supabase Auth
 - **V1.15** — coș, checkout și experiență mobilă finisate pentru testarea finală
+- **V1.16.0** — audit public, catalog verificat și stabilizarea fluxurilor de comandă
 
 Versiunea găzduită în Sites folosește D1 pentru date și R2 pentru imaginile
 încărcate. Exportul din Admin păstrează catalogul complet și toate

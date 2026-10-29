@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 function valueOrPlaceholder(value: string, label: string) {
-  return value || `[${label} — de completat din Admin]`;
+  return value || `${label} în curs de publicare`;
 }
 
 export default async function TermsPage() {
@@ -42,9 +42,8 @@ export default async function TermsPage() {
       <article className="terms page-shell">
         {!ready && (
           <p className="legal-note">
-            Magazinul este încă în pregătire. Câmpurile dintre paranteze vor fi
-            completate cu datele reale ale comerciantului înainte de lansarea
-            publică și documentul va trece printr-o verificare juridică finală.
+            Magazinul este în pregătire. Datele complete ale comerciantului vor
+            fi publicate înainte de deschiderea comenzilor reale.
           </p>
         )}
 
@@ -64,7 +63,7 @@ export default async function TermsPage() {
         </p>
         <p>
           Ne poți contacta la{" "}
-          {email ? <a href={`mailto:${email}`}>{email}</a> : "[email de contact]"}
+          {email ? <a href={`mailto:${email}`}>{email}</a> : <Link href="/contact">formularul de contact</Link>}
           {profile.phone ? <> sau la <a href={`tel:${profile.phone.replace(/\s/g, "")}`}>{profile.phone}</a></> : null}.
         </p>
 
@@ -86,7 +85,7 @@ export default async function TermsPage() {
         <p>
           Toate prețurile sunt afișate în lei (RON).{" "}
           {profile.priceTaxNotice ||
-            "[Regimul TVA și mențiunea fiscală vor fi completate înainte de lansare.]"}{" "}
+            "Mențiunea fiscală va fi publicată înainte de lansare."}{" "}
           Costul livrării este prezentat separat în checkout, înainte de
           trimiterea comenzii.
         </p>

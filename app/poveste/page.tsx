@@ -3,7 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowIcon } from "../components/icons";
 
-export const metadata: Metadata = { title: "Povestea noastră" };
+export const metadata: Metadata = {
+  title: "Despre atelier",
+  description:
+    "Află cum sunt realizate și finisate manual lumânările La Lumina Lumânării.",
+  alternates: { canonical: "/poveste" },
+};
 
 export default function StoryPage() {
   return (
@@ -11,19 +16,19 @@ export default function StoryPage() {
       <section className="story-hero page-shell">
         <div className="story-hero__copy">
           <div className="breadcrumbs"><Link href="/">Acasă</Link><span>/</span><span>Povestea noastră</span></div>
-          <p className="eyebrow eyebrow--gold">Din drag pentru serile lente</p>
-          <h1>Totul a început la lumina unei lumânări.</h1>
-          <p>Din dorința de a face casa să se simtă mai caldă, am început să modelăm în loturi mici lumânări inspirate de anotimpuri și momentele care merită păstrate.</p>
+          <p className="eyebrow eyebrow--gold">Despre atelier</p>
+          <h1>Lumânări realizate și pictate manual.</h1>
+          <p>Lucrăm în loturi mici, iar fiecare piesă trece prin turnare, finisare și verificare înainte de ambalare. Colecțiile urmăresc anotimpurile și sărbătorile din an.</p>
         </div>
         <div className="story-hero__image">
-          <Image src="/images/hero-ritual-nocturn.webp" alt="Atelier nocturn cu lumânare aprinsă" fill unoptimized priority />
+          <Image src="/images/hero-ritual-nocturn.webp" alt="Lumânare aprinsă într-un decor de atelier" fill unoptimized priority />
         </div>
       </section>
       <section className="manifesto">
         <div className="page-shell manifesto__inner">
-          <p className="eyebrow">Manifestul nostru</p>
-          <blockquote>„Nu facem doar lumină. Creăm un motiv să încetinești.”</blockquote>
-          <p>Credem în obiecte frumoase, forme cu poveste și ritualuri mici care schimbă felul în care simțim o cameră.</p>
+          <p className="eyebrow">Cum lucrăm</p>
+          <blockquote>Fiecare model este pregătit cu atenție, de la turnare până la ultimul detaliu pictat.</blockquote>
+          <p>Micile variații de culoare și finisaj fac parte din lucrul manual și pot face fiecare piesă ușor diferită.</p>
         </div>
       </section>
       <section className="values page-shell">
@@ -33,9 +38,9 @@ export default function StoryPage() {
       </section>
       <section className="story-cta">
         <div>
-          <p className="eyebrow eyebrow--gold">Alege prima ta lumină</p>
-          <h2>O seară obișnuită poate deveni un ritual.</h2>
-          <Link className="button button--primary" href="/lumanari">Descoperă lumânările <ArrowIcon /></Link>
+          <p className="eyebrow eyebrow--gold">Catalogul actual</p>
+          <h2>Vezi modelele disponibile acum.</h2>
+          <Link className="button button--primary" href="/lumanari">Vezi lumânările <ArrowIcon /></Link>
         </div>
       </section>
     </main>

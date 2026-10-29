@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../../db";
 import { catalogProducts } from "../../db/schema";
 import {
+  isStorefrontProductComplete,
   products as builtInProducts,
   type Product,
   type ProductStatus,
@@ -137,7 +138,9 @@ function builtInAsManaged(product: Product): ManagedProduct {
   return {
     ...product,
     managed: false,
-    status: product.status ?? "published",
+    status:
+      product.status ??
+      (isStorefrontProductComplete(product) ? "published" : "draft"),
     stock: product.stock ?? 0,
   };
 }
@@ -162,7 +165,11 @@ export async function getStoreProducts(): Promise<Product[]> {
     getHomepageSettings(),
   ]);
   return products
-    .filter((product) => product.status === "published")
+    .filter(
+      (product) =>
+        product.status === "published" &&
+        isStorefrontProductComplete(product),
+    )
     .map(({ managed: _managed, updatedAt: _updatedAt, ...product }) => {
       void _managed;
       void _updatedAt;

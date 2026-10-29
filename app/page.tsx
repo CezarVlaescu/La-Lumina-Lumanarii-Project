@@ -65,13 +65,16 @@ function bestSellingProducts(products: Product[], orders: AdminOrder[]) {
     (a, b) => (sold.get(b.slug) ?? 0) - (sold.get(a.slug) ?? 0),
   );
   const actuallySold = ranked.filter((product) => (sold.get(product.slug) ?? 0) > 0);
-  return fillProductSelection(
-    actuallySold,
-    [
-      ...products.filter((product) => product.featured),
-      ...products,
-    ],
-  );
+  return {
+    products: fillProductSelection(
+      actuallySold,
+      [
+        ...products.filter((product) => product.featured),
+        ...products,
+      ],
+    ),
+    hasSales: actuallySold.length > 0,
+  };
 }
 
 export default async function Home() {
@@ -86,7 +89,10 @@ export default async function Home() {
     (collection) => collection.slug === hero.id,
   );
   const selectedThemeProducts = themeProducts(products, hero);
-  const bestSellers = bestSellingProducts(products, orders);
+  const { products: bestSellers, hasSales } = bestSellingProducts(
+    products,
+    orders,
+  );
   const weeklyOffer = homepageSettings.weeklyOffer;
   const offerActive = isWeeklyOfferActive(weeklyOffer);
   const offerProduct = offerActive
@@ -139,9 +145,9 @@ export default async function Home() {
               </Link>
             </div>
             <div className="hero__proof">
-              <span>Turnate manual</span>
-              <span>Ceară vegetală</span>
-              <span>Parfum de durată</span>
+              <span>Loturi mici</span>
+              <span>Pictate manual</span>
+              <span>Fotografii reale</span>
             </div>
           </div>
         </div>
@@ -153,10 +159,10 @@ export default async function Home() {
 
       <section className="trust-strip">
         <div className="page-shell trust-strip__inner">
-          <div><span className="trust-icon">✦</span><div><strong>Lucrate manual</strong><p>Fiecare detaliu este finisat cu grijă</p></div></div>
-          <div><span className="trust-icon">◌</span><div><strong>Pictate individual</strong><p>Micile diferențe fac fiecare piesă unică</p></div></div>
-          <div><span className="trust-icon">♧</span><div><strong>Creat în România</strong><p>Într-un atelier cu suflet</p></div></div>
-          <div><span className="trust-icon">◇</span><div><strong>Colecții sezoniere</strong><p>Forme noi pentru fiecare sărbătoare</p></div></div>
+          <div><span className="trust-icon">✦</span><div><strong>Turnate manual</strong><p>Realizate în loturi mici</p></div></div>
+          <div><span className="trust-icon">◌</span><div><strong>Pictate individual</strong><p>Fiecare piesă are mici diferențe</p></div></div>
+          <div><span className="trust-icon">♧</span><div><strong>Fotografii reale</strong><p>Vezi produsul pe care îl alegi</p></div></div>
+          <div><span className="trust-icon">◇</span><div><strong>Colecții de sezon</strong><p>Modele pentru sărbători și cadouri</p></div></div>
         </div>
       </section>
 
@@ -166,7 +172,7 @@ export default async function Home() {
             <p className="eyebrow">{hero.id === "standard" ? "Alese din atelier" : hero.eyebrow}</p>
             <h2>
               {hero.id === "standard"
-                ? "Lumânări care dau formă momentelor tale."
+                ? "Lumânări disponibile acum."
                 : `Descoperă colecția ${collectionName}.`}
             </h2>
           </div>
@@ -212,7 +218,7 @@ export default async function Home() {
           <div className="weekly-offer__image">
             <Image
               src={offerProduct.variants?.[0]?.image ?? offerProduct.image}
-              alt={`Oferta săptămânii: ${offerProduct.name}`}
+              alt={`${weeklyOffer.discountPercent > 0 ? "Oferta" : "Recomandarea"} săptămânii: ${offerProduct.name}`}
               fill
               sizes="(max-width: 820px) 100vw, 52vw"
               unoptimized
@@ -224,7 +230,11 @@ export default async function Home() {
             </span>
           </div>
           <div className="weekly-offer__content">
-            <p className="eyebrow eyebrow--gold">{weeklyOffer.eyebrow}</p>
+            <p className="eyebrow eyebrow--gold">
+              {weeklyOffer.discountPercent > 0
+                ? weeklyOffer.eyebrow
+                : "Recomandarea săptămânii"}
+            </p>
             <h2 id="weekly-offer-title">{weeklyOffer.title}</h2>
             <p>{weeklyOffer.description}</p>
             <div className="weekly-offer__product">
@@ -244,7 +254,9 @@ export default async function Home() {
               className="button button--primary"
               href={`/lumanari/${offerProduct.slug}`}
             >
-              {weeklyOffer.ctaLabel} <ArrowIcon />
+              {weeklyOffer.discountPercent > 0
+                ? weeklyOffer.ctaLabel
+                : "Vezi produsul"} <ArrowIcon />
             </Link>
           </div>
         </section>
@@ -253,8 +265,10 @@ export default async function Home() {
       <section className="section page-shell">
         <div className="section-heading section-heading--split">
           <div>
-            <p className="eyebrow">Preferatele clienților</p>
-            <h2>Cele mai vândute.</h2>
+            <p className="eyebrow">
+              {hasSales ? "Preferatele clienților" : "Recomandate"}
+            </p>
+            <h2>{hasSales ? "Cele mai vândute." : "Alese din atelier."}</h2>
           </div>
           <Link className="text-link" href="/lumanari">
             Vezi toate lumânările <ArrowIcon />
@@ -269,8 +283,8 @@ export default async function Home() {
 
       <section className="section page-shell">
         <div className="section-heading section-heading--center">
-          <p className="eyebrow">Alege după stare</p>
-          <h2>O colecție pentru fiecare fel de seară.</h2>
+          <p className="eyebrow">Colecții de sezon</p>
+          <h2>Alege colecția potrivită.</h2>
         </div>
         <div className="collection-grid">
           {collections.map((collection) => (
@@ -287,16 +301,18 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="scent-quiz">
-        <div className="scent-quiz__orb scent-quiz__orb--one" />
-        <div className="scent-quiz__orb scent-quiz__orb--two" />
-        <div className="scent-quiz__content">
-          <p className="eyebrow eyebrow--gold">Găsește-ți lumânarea</p>
-          <h2>Ce fel de moment vrei să luminezi?</h2>
-          <p>Răspunde la trei întrebări și îți recomandăm o piesă potrivită stării, decorului și darului pe care îl pregătești.</p>
-          <Link className="button button--primary" href="/ghid-parfum">Alege lumânarea <ArrowIcon /></Link>
-        </div>
-      </section>
+      {products.length >= 3 && (
+        <section className="scent-quiz">
+          <div className="scent-quiz__orb scent-quiz__orb--one" />
+          <div className="scent-quiz__orb scent-quiz__orb--two" />
+          <div className="scent-quiz__content">
+            <p className="eyebrow eyebrow--gold">Ghid de alegere</p>
+            <h2>Nu știi ce model să alegi?</h2>
+            <p>Răspunde la trei întrebări despre decor, formă și culori.</p>
+            <Link className="button button--primary" href="/ghid-parfum">Începe ghidul <ArrowIcon /></Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
