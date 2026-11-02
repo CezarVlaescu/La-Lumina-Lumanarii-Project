@@ -4380,7 +4380,7 @@ h4 {
   align-items: center;
   gap: 22px;
   border: 1px solid var(--line);
-  background: rgba(16, 10, 18, 0.97);
+  background: color-mix(in srgb, var(--theme-deep) 96%, transparent);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(14px);
 }
@@ -4390,7 +4390,7 @@ h4 {
 }
 
 .cookie-notice strong {
-  color: #dbd0c3;
+  color: var(--cream);
   font-family: var(--serif);
   font-size: 16px;
   font-weight: 500;
@@ -4398,7 +4398,7 @@ h4 {
 
 .cookie-notice p {
   margin: 6px 0;
-  color: #8b7e74;
+  color: var(--cream-muted);
   font-size: 10px;
   line-height: 1.55;
 }
