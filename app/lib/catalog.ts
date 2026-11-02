@@ -687,6 +687,14 @@ export function formatWeight(value?: string) {
   return /^\d+(?:[.,]\d+)?$/.test(weight) ? `${weight} g` : weight;
 }
 
+export function formatBurnTime(value?: string) {
+  const burnTime = value?.trim();
+  if (!burnTime) return "";
+  return /^\d+(?:[.,]\d+)?$/.test(burnTime)
+    ? `${burnTime} ore`
+    : burnTime;
+}
+
 export function isStorefrontProductComplete(product: Product) {
   const hasPrice = product.variants?.length
     ? product.variants.every(

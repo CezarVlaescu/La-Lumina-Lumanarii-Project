@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  clearValidationMessage,
+  setRomanianValidationMessage,
+  validateFormInRomanian,
+} from "../lib/form-validation";
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
@@ -10,6 +15,7 @@ export function ContactForm() {
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!validateFormInRomanian(event.currentTarget)) return;
     if (submitting) return;
     setSubmitting(true);
     setError("");
@@ -52,7 +58,13 @@ export function ContactForm() {
       <button className="button button--outline-gold" onClick={() => setSent(false)}>Trimite alt mesaj</button>
     </div>
   ) : (
-    <form className="contact-form" onSubmit={submit}>
+    <form
+      className="contact-form"
+      onSubmit={submit}
+      noValidate
+      onInvalid={setRomanianValidationMessage}
+      onInputCapture={clearValidationMessage}
+    >
       <div className="form-grid">
         <label className="field"><span>Prenume</span><input name="firstName" autoComplete="given-name" maxLength={80} required /></label>
         <label className="field"><span>Nume</span><input name="lastName" autoComplete="family-name" maxLength={80} required /></label>

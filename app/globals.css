@@ -215,7 +215,11 @@ h4 {
   gap: 32px;
   border: 1px solid var(--line);
   background:
-    radial-gradient(circle at 8% 0%, rgba(112, 36, 92, 0.28), transparent 28%),
+    radial-gradient(
+      circle at 8% 0%,
+      color-mix(in srgb, var(--gold) 24%, transparent),
+      transparent 28%
+    ),
     var(--theme-deep, #120b14);
   box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
   opacity: 0;
@@ -1775,7 +1779,7 @@ h4 {
   aspect-ratio: 0.92;
   overflow: hidden;
   border: 1px solid var(--line-soft);
-  background: #07110c;
+  background: color-mix(in srgb, var(--surface) 86%, var(--ink));
 }
 
 .product-detail__main-image img {
@@ -2362,7 +2366,7 @@ h4 {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 50%;
-  background: rgba(13, 7, 16, 0.58);
+  background: color-mix(in srgb, var(--theme-deep) 76%, transparent);
   color: var(--gold-light);
   font-family: var(--serif);
   font-size: 16px;
@@ -3164,9 +3168,17 @@ h4 {
   min-height: 760px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 75% 28%, rgba(97, 28, 80, 0.5), transparent 31%),
-    radial-gradient(circle at 18% 90%, rgba(217, 149, 61, 0.1), transparent 22%),
-    #0d0710;
+    radial-gradient(
+      circle at 75% 28%,
+      color-mix(in srgb, var(--gold) 24%, transparent),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 18% 90%,
+      color-mix(in srgb, var(--gold-light) 10%, transparent),
+      transparent 22%
+    ),
+    var(--ink);
 }
 
 .quiz-page__glow {
@@ -3176,7 +3188,7 @@ h4 {
   width: 170px;
   height: 170px;
   border-radius: 50%;
-  background: rgba(217, 149, 61, 0.12);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
   filter: blur(70px);
 }
 
@@ -3193,20 +3205,20 @@ h4 {
   margin: 65px auto 0;
   padding: clamp(36px, 6vw, 72px);
   border: 1px solid var(--line);
-  background: rgba(24, 14, 26, 0.9);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   box-shadow: var(--shadow);
 }
 
 .quiz-progress {
   height: 2px;
   margin-bottom: 45px;
-  background: rgba(243, 236, 221, 0.08);
+  background: color-mix(in srgb, var(--cream) 8%, transparent);
 }
 
 .quiz-progress span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #bd6f2c, var(--gold-light));
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
   transition: width 220ms ease;
 }
 
@@ -3228,7 +3240,7 @@ h4 {
   justify-content: space-between;
   border: 1px solid var(--line-soft);
   background: transparent;
-  color: #d8cdc0;
+  color: var(--cream-muted);
   text-align: left;
   transition: all 180ms ease;
 }
@@ -3236,7 +3248,7 @@ h4 {
 .quiz-options button:hover {
   padding-left: 28px;
   border-color: var(--gold);
-  background: rgba(217, 149, 61, 0.06);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
   color: var(--gold-light);
 }
 
@@ -3247,7 +3259,7 @@ h4 {
 .quiz-result > p:not(.eyebrow) {
   max-width: 600px;
   margin: 25px auto;
-  color: #9c8f83;
+  color: var(--cream-muted);
   line-height: 1.8;
 }
 
@@ -3263,7 +3275,7 @@ h4 {
   padding: 8px 11px;
   border: 1px solid var(--line);
   border-radius: 30px;
-  color: #c4b8aa;
+  color: var(--cream-muted);
   font-family: var(--serif);
   font-size: 13px;
 }
@@ -3432,7 +3444,7 @@ h4 {
 .withdrawal-form > section {
   padding: 52px;
   border: 1px solid var(--line);
-  background: #110b12;
+  background: var(--surface);
 }
 
 .withdrawal-form > section > p {
@@ -7545,7 +7557,11 @@ h4 {
   padding: 42px;
   border: 1px solid var(--line);
   background:
-    radial-gradient(circle at 90% 0%, rgba(108, 40, 89, 0.32), transparent 40%),
+    radial-gradient(
+      circle at 90% 0%,
+      color-mix(in srgb, var(--gold) 22%, transparent),
+      transparent 40%
+    ),
     var(--surface);
   box-shadow: var(--shadow);
   grid-template-columns: 44px 1fr;
@@ -7583,7 +7599,11 @@ h4 {
   padding: clamp(30px, 5vw, 54px);
   border: 1px solid var(--line);
   background:
-    radial-gradient(circle at 100% 0%, rgba(108, 40, 89, 0.34), transparent 38%),
+    radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--gold) 24%, transparent),
+      transparent 38%
+    ),
     var(--surface);
   box-shadow: var(--shadow);
 }
@@ -7637,7 +7657,7 @@ h4 {
   border: 1px solid var(--line-soft);
   border-radius: 0;
   outline: 0;
-  background: rgba(8, 4, 9, 0.46);
+  background: color-mix(in srgb, var(--theme-deep) 54%, transparent);
 }
 
 .account-auth-form input:focus,
@@ -7838,7 +7858,7 @@ h4 {
   position: relative;
   padding: 19px 20px;
   border: 1px solid var(--line-soft);
-  background: rgba(8, 4, 9, 0.24);
+  background: color-mix(in srgb, var(--theme-deep) 28%, transparent);
 }
 
 .account-addresses article > div {
@@ -7890,7 +7910,7 @@ h4 {
 
 .account-orders details {
   border: 1px solid var(--line-soft);
-  background: rgba(8, 4, 9, 0.24);
+  background: color-mix(in srgb, var(--theme-deep) 28%, transparent);
 }
 
 .account-orders summary {
@@ -8439,7 +8459,7 @@ h4 {
     right: 12px;
     bottom: 12px;
     padding: 6px 9px;
-    background: rgba(13, 7, 16, 0.72);
+    background: color-mix(in srgb, var(--theme-deep) 80%, transparent);
     opacity: 1;
     transform: none;
     backdrop-filter: blur(7px);
@@ -9410,7 +9430,7 @@ h4 {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #8d4e76, var(--gold));
+  background: linear-gradient(90deg, var(--gold-light), var(--gold));
   transition: width 220ms ease;
 }
 

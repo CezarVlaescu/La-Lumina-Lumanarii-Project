@@ -90,7 +90,7 @@ export function ScentQuiz({ products }: { products: Product[] }) {
         <p>{product.description}</p>
         <div className="quiz-result__notes">{product.details.map((detail) => <span key={detail}>{detail}</span>)}</div>
         <Link className="button button--primary" href={`/lumanari/${product.slug}`}>Descoperă lumânarea <ArrowIcon /></Link>
-        <button className="text-link" onClick={() => { setStep(0); setScores([0, 0, 0]); }}>Reia ghidul</button>
+        <button type="button" className="text-link" onClick={() => { setStep(0); setScores([0, 0, 0]); }}>Reia ghidul</button>
       </div>
     );
   }
@@ -98,12 +98,21 @@ export function ScentQuiz({ products }: { products: Product[] }) {
   const question = questions[step];
   return (
     <div className="quiz-card">
-      <div className="quiz-progress"><span style={{ width: `${((step + 1) / questions.length) * 100}%` }} /></div>
+      <div
+        className="quiz-progress"
+        role="progressbar"
+        aria-label="Progresul ghidului"
+        aria-valuemin={1}
+        aria-valuemax={questions.length}
+        aria-valuenow={step + 1}
+      >
+        <span style={{ width: `${((step + 1) / questions.length) * 100}%` }} />
+      </div>
       <p className="eyebrow">Întrebarea {step + 1} din {questions.length}</p>
       <h1>{question.title}</h1>
       <div className="quiz-options">
         {question.options.map((option) => (
-          <button key={option.label} onClick={() => answer(option.value)}>
+          <button type="button" key={option.label} onClick={() => answer(option.value)}>
             <span>{option.label}</span><ArrowIcon />
           </button>
         ))}

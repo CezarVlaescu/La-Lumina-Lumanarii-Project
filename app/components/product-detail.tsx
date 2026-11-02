@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import type { Product } from "../lib/catalog";
 import {
+  formatBurnTime,
   formatPrice,
   formatWeight,
   getProductCompareAtPrice,
@@ -116,14 +117,14 @@ export function ProductDetail({ product }: { product: Product }) {
             <span>{formatPrice(selectedPrice)}</span>
           </div>
           <p className="product-detail__description">{product.description}</p>
-          {product.variants && (
+          {Boolean(product.variants?.length) && (
             <div className="product-variants">
               <div className="product-variants__heading">
                 <span>Culoare</span>
                 <strong>{selectedVariant?.name}</strong>
               </div>
               <div className="product-variants__options">
-                {product.variants.map((variant) => (
+                {product.variants?.map((variant) => (
                   <button
                     type="button"
                     className={variant.id === selectedVariantId ? "variant-option variant-option--active" : "variant-option"}
@@ -146,7 +147,7 @@ export function ProductDetail({ product }: { product: Product }) {
             <div><span>Tip</span><strong>{product.category}</strong></div>
             <div><span>Colecție</span><strong>{product.collection}</strong></div>
             {product.weight && <div><span>Greutate</span><strong>{formatWeight(product.weight)}</strong></div>}
-            {product.burnTime && <div><span>Timp de ardere</span><strong>{product.burnTime}</strong></div>}
+            {product.burnTime && <div><span>Timp de ardere</span><strong>{formatBurnTime(product.burnTime)}</strong></div>}
           </div>
           {selectedPrice !== null && selectedStock > 0 ? (
             <div className="product-buy-wrapper">

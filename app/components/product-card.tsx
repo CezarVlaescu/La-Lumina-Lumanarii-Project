@@ -42,9 +42,9 @@ export function ProductCard({ product }: { product: Product }) {
         <div>
           <Link href={`/lumanari/${product.slug}`}><h3>{product.name}</h3></Link>
           <p>{product.subtitle}</p>
-          {product.variants && (
+          {Boolean(product.variants?.length) && (
             <div className="product-card__variants" aria-label="Variante de culoare">
-              {product.variants.map((variant) => (
+              {product.variants?.map((variant) => (
                 <button
                   className={variant.id === selectedVariantId ? "variant-swatch variant-swatch--active" : "variant-swatch"}
                   key={variant.id}

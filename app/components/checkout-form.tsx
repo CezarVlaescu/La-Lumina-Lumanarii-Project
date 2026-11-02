@@ -18,6 +18,11 @@ import {
 } from "../lib/shipping";
 import { getCartLineId, useStore } from "./store-provider";
 import type { AccountCheckoutDefaults } from "../lib/account-types";
+import {
+  clearValidationMessage,
+  setRomanianValidationMessage,
+  validateFormInRomanian,
+} from "../lib/form-validation";
 
 type CheckoutFormProps = {
   stripeEnabled: boolean;
@@ -73,6 +78,7 @@ export function CheckoutForm({
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!validateFormInRomanian(event.currentTarget)) return;
     if (submitting) return;
 
     setSubmitting(true);
@@ -227,6 +233,9 @@ export function CheckoutForm({
     <form
       className="checkout-layout"
       onSubmit={submitOrder}
+      noValidate
+      onInvalid={setRomanianValidationMessage}
+      onInputCapture={clearValidationMessage}
       aria-busy={submitting}
     >
       <div className="checkout-fields">

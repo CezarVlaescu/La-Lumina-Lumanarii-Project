@@ -7,6 +7,20 @@ import { allCollectionThemes, type Product } from "../lib/catalog";
 import { SearchIcon } from "./icons";
 
 const categories = ["Toate", "Decorativă", "Figurină", "Recipient"] as const;
+const sortOptions = [
+  "featured",
+  "new",
+  "price-asc",
+  "price-desc",
+  "name",
+] as const;
+type CatalogSort = (typeof sortOptions)[number];
+
+function normalizeSort(value: string): CatalogSort {
+  return sortOptions.includes(value as CatalogSort)
+    ? (value as CatalogSort)
+    : "featured";
+}
 
 type CatalogBrowserProps = {
   products: Product[];
@@ -42,7 +56,7 @@ export function CatalogBrowser({
   const [collection, setCollection] = useState(initialCollection);
   const [theme, setTheme] = useState(initialTheme);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState(initialSort === "new" ? "new" : "featured");
+  const [sort, setSort] = useState<CatalogSort>(normalizeSort(initialSort));
 
   const filtered = useMemo(() => {
     const visible = products.filter((product) => {
@@ -85,7 +99,7 @@ export function CatalogBrowser({
         </div>
         <label className="catalog-sort">
           <span>Sortează</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <select value={sort} onChange={(event) => setSort(normalizeSort(event.target.value))}>
             <option value="featured">Recomandate</option>
             <option value="new">Noutăți</option>
             <option value="price-asc">Preț crescător</option>

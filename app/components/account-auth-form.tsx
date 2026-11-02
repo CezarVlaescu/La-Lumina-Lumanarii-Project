@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import {
+  clearValidationMessage,
+  setRomanianValidationMessage,
+  validateFormInRomanian,
+} from "../lib/form-validation";
 
 type AuthMode = "login" | "register" | "recover";
 
@@ -23,6 +28,7 @@ export function AccountAuthForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!validateFormInRomanian(event.currentTarget)) return;
     if (busy) return;
     setBusy(true);
     setError("");
@@ -116,7 +122,13 @@ export function AccountAuthForm({
         </p>
       </div>
 
-      <form className="account-auth-form" onSubmit={submit}>
+      <form
+        className="account-auth-form"
+        onSubmit={submit}
+        noValidate
+        onInvalid={setRomanianValidationMessage}
+        onInputCapture={clearValidationMessage}
+      >
         {mode === "register" && (
           <div className="account-auth-form__row">
             <label>

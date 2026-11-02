@@ -61,6 +61,13 @@ const validCheckout = {
   lines: [{ productSlug: "bradut-alb-perlat", quantity: 1 }],
 };
 
+test("normalizes numeric burn-time values", async () => {
+  const { formatBurnTime } = await import("../app/lib/catalog.ts");
+  assert.equal(formatBurnTime("24"), "24 ore");
+  assert.equal(formatBurnTime("24 ore"), "24 ore");
+  assert.equal(formatBurnTime("aprox. 30 ore"), "aprox. 30 ore");
+});
+
 test("renders the public storefront routes", async () => {
   const routes = [
     "/",
