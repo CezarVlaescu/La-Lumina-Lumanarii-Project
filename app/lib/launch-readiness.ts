@@ -10,6 +10,7 @@ import type { ShippingSettings } from "./shipping";
 import { siteUrl } from "./site-config";
 import type { StoreProfile } from "./store-profile";
 import { isSupabaseConfigured } from "./supabase-server";
+import { configuredNotificationEmails } from "./notification-recipients";
 
 function runtimeConfiguration() {
   try {
@@ -30,7 +31,7 @@ function runtimeConfiguration() {
       email: Boolean(
         env.RESEND_API_KEY?.trim() &&
           env.STORE_EMAIL_FROM?.trim() &&
-          env.STORE_NOTIFICATION_EMAIL?.trim(),
+          configuredNotificationEmails().length,
       ),
       stripe,
       stripeMode,

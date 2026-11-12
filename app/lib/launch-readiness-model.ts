@@ -97,9 +97,13 @@ export function buildLaunchReadiness(
       shipping.freeShippingThreshold > 0,
     testOrder: orders.some(isSuccessfulTestOrder),
   };
-  const requiredValues = Object.values(required);
-  const completedSteps = requiredValues.filter(Boolean).length;
-  const blockingSteps = requiredValues.length - completedSteps;
+  const operationalRequirements = [
+    required.admin,
+    required.catalog,
+    required.shipping,
+  ];
+  const completedSteps = operationalRequirements.filter(Boolean).length;
+  const blockingSteps = operationalRequirements.length - completedSteps;
 
   return {
     required,
@@ -113,7 +117,9 @@ export function buildLaunchReadiness(
       missingFields: legalMissingFields,
     },
     integrations,
-    progress: Math.round((completedSteps / requiredValues.length) * 100),
+    progress: Math.round(
+      (completedSteps / operationalRequirements.length) * 100,
+    ),
     blockingSteps,
     cashOnDeliveryReady: blockingSteps === 0,
   };

@@ -118,6 +118,9 @@ export default async function Home() {
           {
             "--hero-accent": hero.accentColor,
             "--hero-overlay": hero.overlayColor,
+            "--hero-position-x": `${hero.imagePositionX}%`,
+            "--hero-position-y": `${hero.imagePositionY}%`,
+            "--hero-scale": hero.imageScale,
           } as React.CSSProperties
         }
       >
@@ -152,7 +155,7 @@ export default async function Home() {
           </div>
         </div>
         <div className="scroll-cue" aria-hidden="true">
-          <span>Descoperă</span>
+          <span>Continuă</span>
           <i />
         </div>
       </section>

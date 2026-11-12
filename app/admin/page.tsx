@@ -11,6 +11,8 @@ import { getLaunchReadiness } from "../lib/launch-readiness";
 import { getHeroSettings } from "../lib/hero-settings";
 import { accountSignOutPath } from "../lib/account-auth";
 import { getHomepageSettings } from "../lib/homepage-settings";
+import { getNewsletterSubscribers } from "../lib/newsletter-repository";
+import { getMarketingOverview } from "../lib/marketing-email-service";
 
 export const metadata: Metadata = {
   title: "Administrare",
@@ -29,6 +31,7 @@ export default async function AdminPage() {
     initialContactMessages,
     initialHeroSettings,
     initialHomepageSettings,
+    initialNewsletterSubscribers,
   ] = await Promise.all([
     getAdminProducts(),
     getAdminOrders(),
@@ -37,7 +40,11 @@ export default async function AdminPage() {
     getAdminContactMessages(),
     getHeroSettings(),
     getHomepageSettings(),
+    getNewsletterSubscribers(),
   ]);
+  const initialMarketingOverview = await getMarketingOverview(
+    initialNewsletterSubscribers,
+  );
   const initialLaunchReadiness = getLaunchReadiness(
     initialProducts,
     initialOrders,
@@ -54,6 +61,8 @@ export default async function AdminPage() {
       initialContactMessages={initialContactMessages}
       initialHeroSettings={initialHeroSettings}
       initialHomepageSettings={initialHomepageSettings}
+      initialMarketingOverview={initialMarketingOverview}
+      initialNewsletterSubscribers={initialNewsletterSubscribers.slice(0, 100)}
       initialLaunchReadiness={initialLaunchReadiness}
       userName={user.fullName ?? user.displayName}
       signOutHref={accountSignOutPath("/")}

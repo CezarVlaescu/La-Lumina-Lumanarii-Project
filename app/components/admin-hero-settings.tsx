@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { HeroSettings, HeroTheme } from "../lib/hero-settings";
+import { SeasonalEffect } from "./seasonal-effect";
 
 type AdminHeroSettingsProps = {
   settings: HeroSettings;
@@ -217,6 +218,9 @@ export function AdminHeroSettings({
                 "--hero-admin-background": selected.backgroundColor,
                 "--hero-admin-surface": selected.surfaceColor,
                 "--hero-admin-text": selected.textColor,
+                "--hero-admin-position-x": `${selected.imagePositionX}%`,
+                "--hero-admin-position-y": `${selected.imagePositionY}%`,
+                "--hero-admin-scale": selected.imageScale,
               } as React.CSSProperties
             }
           >
@@ -228,6 +232,11 @@ export function AdminHeroSettings({
               unoptimized
             />
             <span />
+            <SeasonalEffect
+              effect={selected.effect}
+              intensity={selected.effectIntensity}
+              preview
+            />
             <article>
               <p>{selected.eyebrow}</p>
               <h3>{selected.title}</h3>
@@ -321,6 +330,81 @@ export function AdminHeroSettings({
                 </label>
               </>
             )}
+            <label className="admin-field">
+              <span>Efect ambiental</span>
+              <select
+                value={selected.effect}
+                onChange={(event) =>
+                  updateTheme({
+                    effect: event.target.value as HeroTheme["effect"],
+                  })
+                }
+              >
+                <option value="none">Fără efect</option>
+                <option value="snow">Ninsoare</option>
+                <option value="hearts">Inimi</option>
+                <option value="petals">Petale</option>
+                <option value="leaves">Frunze</option>
+                <option value="sparkles">Sclipiri</option>
+              </select>
+            </label>
+            <label className="admin-field">
+              <span>Focalizare orizontală: {Math.round(selected.imagePositionX)}%</span>
+              <input
+                max="100"
+                min="0"
+                type="range"
+                value={selected.imagePositionX}
+                onChange={(event) =>
+                  updateTheme({ imagePositionX: Number(event.target.value) })
+                }
+              />
+            </label>
+            <label className="admin-field">
+              <span>Focalizare verticală: {Math.round(selected.imagePositionY)}%</span>
+              <input
+                max="100"
+                min="0"
+                type="range"
+                value={selected.imagePositionY}
+                onChange={(event) =>
+                  updateTheme({ imagePositionY: Number(event.target.value) })
+                }
+              />
+            </label>
+            <label className="admin-field admin-field--wide">
+              <span>Mărire fotografie: {selected.imageScale.toFixed(2)}×</span>
+              <input
+                max="1.25"
+                min="1"
+                step="0.01"
+                type="range"
+                value={selected.imageScale}
+                onChange={(event) =>
+                  updateTheme({ imageScale: Number(event.target.value) })
+                }
+              />
+              <small>
+                Folosește o mărire ușoară pentru ca fotografia să umple mai bine primul ecran.
+              </small>
+            </label>
+            <label className="admin-field">
+              <span>Intensitatea efectului</span>
+              <select
+                disabled={selected.effect === "none"}
+                value={selected.effectIntensity}
+                onChange={(event) =>
+                  updateTheme({
+                    effectIntensity: event.target
+                      .value as HeroTheme["effectIntensity"],
+                  })
+                }
+              >
+                <option value="subtle">Discretă</option>
+                <option value="balanced">Echilibrată</option>
+                <option value="festive">Festivă</option>
+              </select>
+            </label>
             <label className="admin-field admin-field--wide">
               <span>Text deasupra titlului</span>
               <input

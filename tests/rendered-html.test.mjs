@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const developmentPreviewMeta =
@@ -68,6 +69,76 @@ test("normalizes numeric burn-time values", async () => {
   assert.equal(formatBurnTime("aprox. 30 ore"), "aprox. 30 ore");
 });
 
+test("configures reusable effects for seasonal themes", async () => {
+  const heroSettings = await readFile(
+    new URL("../app/lib/hero-settings.ts", import.meta.url),
+    "utf8",
+  );
+  const seasonalEffect = await readFile(
+    new URL("../app/components/seasonal-effect.tsx", import.meta.url),
+    "utf8",
+  );
+  const globalStyles = await readFile(
+    new URL("../app/globals.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    heroSettings,
+    /collectionTheme\("iarna"[\s\S]*?effect:\s*"snow"[\s\S]*?effectIntensity:\s*"subtle"/,
+  );
+  assert.match(
+    heroSettings,
+    /collectionTheme\("craciun"[\s\S]*?effect:\s*"snow"[\s\S]*?effectIntensity:\s*"festive"/,
+  );
+  assert.match(
+    heroSettings,
+    /collectionTheme\("valentines"[\s\S]*?effect:\s*"hearts"/,
+  );
+  assert.match(
+    heroSettings,
+    /collectionTheme\("toamna"[\s\S]*?effect:\s*"leaves"/,
+  );
+  assert.match(seasonalEffect, /aria-hidden="true"/);
+  assert.match(
+    globalStyles,
+    /\.seasonal-effect\s*\{[\s\S]*?pointer-events:\s*none;/,
+  );
+  assert.match(globalStyles, /\.seasonal-effect--hearts/);
+  assert.match(globalStyles, /prefers-reduced-motion:[\s\S]*?\.seasonal-effect/);
+});
+
+test("uses a full-screen, focusable homepage hero", async () => {
+  const homepage = await readFile(
+    new URL("../app/page.tsx", import.meta.url),
+    "utf8",
+  );
+  const globalStyles = await readFile(
+    new URL("../app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(homepage, /--hero-position-x/);
+  assert.match(homepage, /--hero-scale/);
+  assert.match(globalStyles, /min-height:\s*max\(640px, calc\(100svh - 121px\)\)/);
+  assert.match(globalStyles, /object-position:\s*var\(--hero-position-x/);
+});
+
+test("prepares draft, immediate and scheduled campaigns safely", async () => {
+  const service = await readFile(
+    new URL("../app/lib/marketing-email-service.ts", import.meta.url),
+    "utf8",
+  );
+  const adminCampaigns = await readFile(
+    new URL("../app/components/admin-email-campaigns.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(service, /input\.action\s*!==\s*"draft"\s*\?\s*\{\s*send:\s*true\s*\}/);
+  assert.match(service, /scheduled_at:\s*new Date\(input\.scheduledAt\)\.toISOString\(\)/);
+  assert.match(adminCampaigns, /new Date\(campaign\.scheduledAt\)\.toISOString\(\)/);
+  assert.match(adminCampaigns, /window\.confirm/);
+});
+
 test("renders the public storefront routes", async () => {
   const routes = [
     "/",
@@ -109,6 +180,8 @@ test("renders only honest homepage sections", async () => {
   assert.doesNotMatch(html, /Cele mai vândute/);
   assert.doesNotMatch(html, /Oferta săptămânii/);
   assert.doesNotMatch(html, /Turturele de Paște/);
+  assert.match(html, /Noutăți pentru fiecare anotimp/);
+  assert.match(html, /name="acceptsMarketing"/);
 });
 
 test("publishes only products with complete commerce data", async () => {
@@ -299,6 +372,39 @@ test("protects and validates the contact endpoint", async () => {
     email: "test@example.com",
     subject: "altceva",
     message: "Mesaj automat de verificare.",
+    companyWebsite: "https://spam.example",
+  });
+  assert.equal(honeypot.status, 201);
+  assert.deepEqual(await honeypot.json(), { ok: true });
+});
+
+test("protects newsletter consent and accepts bot honeypots without storage", async () => {
+  const crossOrigin = await jsonMutation(
+    "/api/newsletter",
+    {},
+    { headers: { origin: "https://invalid.example" } },
+  );
+  assert.equal(crossOrigin.status, 403);
+
+  const missingEmail = await jsonMutation("/api/newsletter", {
+    acceptsMarketing: true,
+  });
+  assert.equal(missingEmail.status, 400);
+  assert.deepEqual(await missingEmail.json(), {
+    error: "Completează adresa de email.",
+  });
+
+  const missingConsent = await jsonMutation("/api/newsletter", {
+    email: "ana@example.com",
+  });
+  assert.equal(missingConsent.status, 400);
+  assert.deepEqual(await missingConsent.json(), {
+    error: "Bifează acordul pentru a primi noutăți prin email.",
+  });
+
+  const honeypot = await jsonMutation("/api/newsletter", {
+    email: "bot@example.com",
+    acceptsMarketing: true,
     companyWebsite: "https://spam.example",
   });
   assert.equal(honeypot.status, 201);

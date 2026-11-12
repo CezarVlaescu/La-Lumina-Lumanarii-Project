@@ -59,15 +59,6 @@ export function AdminLaunchCenter({
       tab: "products",
     },
     {
-      title: "Date juridice și de contact",
-      description: readiness.required.legal
-        ? "Datele firmei sunt disponibile în paginile legale și în checkout."
-        : `${readiness.legal.missingFields.length} câmpuri obligatorii mai trebuie completate.`,
-      ready: readiness.required.legal,
-      action: "Completează datele",
-      tab: "store",
-    },
-    {
       title: "Tarifele de livrare",
       description:
         "Livrarea la adresă, Easybox și pragul pentru transport gratuit sunt configurate.",
@@ -75,19 +66,28 @@ export function AdminLaunchCenter({
       action: "Verifică tarifele",
       tab: "shipping",
     },
+  ];
+
+  const integrationSteps: Step[] = [
+    {
+      title: "Date juridice și de contact",
+      description: readiness.required.legal
+        ? "Datele firmei sunt disponibile în paginile legale și în checkout."
+        : `Magazinul rămâne funcțional pentru testele cu apropiați; ${readiness.legal.missingFields.length} câmpuri se completează înainte de vânzarea publică.`,
+      ready: readiness.required.legal,
+      action: "Completează când sunt disponibile",
+      tab: "store",
+    },
     {
       title: "Comandă completă de test",
       description: readiness.required.testOrder
-        ? "O comandă ramburs validă, cu produse și total pozitiv, a ajuns în panoul de administrare."
-        : "După completarea unui produs, vom plasa o comandă ramburs de test de la început până la final.",
+        ? "O comandă ramburs validă a ajuns în panoul de administrare."
+        : "Este recomandată înainte de campania publică, dar nu blochează testele cu prietenii și familia.",
       ready: readiness.required.testOrder,
       action: readiness.required.testOrder ? "Vezi comenzile" : "Deschide magazinul",
       tab: readiness.required.testOrder ? "orders" : undefined,
       href: readiness.required.testOrder ? undefined : "/lumanari",
     },
-  ];
-
-  const integrationSteps: Step[] = [
     {
       title: "Backup și portabilitate",
       description: readiness.integrations.portableBackup
@@ -110,7 +110,7 @@ export function AdminLaunchCenter({
         ? readiness.integrations.stripeMode === "test"
           ? "Cheile de test și confirmarea prin webhook sunt conectate."
           : "Stripe este conectat; verifică modul înainte de testarea plății."
-        : "Plata cu cardul rămâne blocată până conectăm cheile Stripe de test.",
+        : "Plata cu cardul așteaptă cheile Stripe; comenzile ramburs rămân disponibile.",
       ready:
         readiness.integrations.stripe &&
         readiness.integrations.stripeMode === "test",
@@ -128,16 +128,16 @@ export function AdminLaunchCenter({
     <section className="admin-launch">
       <div className="admin-launch-hero">
         <div>
-          <p className="eyebrow eyebrow--gold">V1.7 · Audit de lansare</p>
+          <p className="eyebrow eyebrow--gold">V1.16.4 · Audit operațional</p>
           <h2>
             {readiness.cashOnDeliveryReady
               ? "Magazinul poate fi lansat cu plata ramburs."
               : `${readiness.blockingSteps} ${readiness.blockingSteps === 1 ? "pas obligatoriu rămas" : "pași obligatorii rămași"}.`}
           </h2>
           <p>
-            Separăm ce blochează vânzarea de integrările care pot fi activate
-            ulterior. Progresul se actualizează automat când completezi
-            produsele, datele sau comenzile.
+            Separăm funcționarea comenzilor ramburs de pașii necesari abia
+            înainte de lansarea publică. Datele juridice, emailul, Stripe și
+            domeniul propriu nu blochează testele restrânse.
           </p>
         </div>
         <div
@@ -154,8 +154,8 @@ export function AdminLaunchCenter({
         <section className="admin-panel admin-launch-panel">
           <div className="admin-panel__heading">
             <div>
-              <p>Obligatoriu</p>
-              <h2>Înainte de prima comandă reală</h2>
+              <p>Operațional</p>
+              <h2>Pentru comenzile ramburs de test</h2>
             </div>
             <span className="admin-launch-count">
               {requiredSteps.filter((step) => step.ready).length}/{requiredSteps.length}
@@ -190,8 +190,8 @@ export function AdminLaunchCenter({
         <aside className="admin-panel admin-launch-panel admin-launch-panel--integrations">
           <div className="admin-panel__heading">
             <div>
-              <p>Activare ulterioară</p>
-              <h2>Conturi și servicii</h2>
+              <p>Înainte de lansarea publică</p>
+              <h2>Recomandări și servicii</h2>
             </div>
           </div>
           <div className="admin-launch-integrations">
@@ -202,6 +202,12 @@ export function AdminLaunchCenter({
                   <StatusPill ready={step.ready} />
                 </div>
                 <p>{step.description}</p>
+                {step.tab && (
+                  <button onClick={() => onNavigate(step.tab!)}>
+                    {step.action} →
+                  </button>
+                )}
+                {step.href && <Link href={step.href}>{step.action} →</Link>}
               </article>
             ))}
           </div>

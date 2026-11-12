@@ -32,7 +32,7 @@ export default async function PrivacyPage() {
       </header>
 
       <article className="terms page-shell">
-        <p className="legal-updated">Ultima actualizare: 29 iulie 2026</p>
+        <p className="legal-updated">Ultima actualizare: 11 noiembrie 2026</p>
 
         <h2>1. Cine este operatorul datelor</h2>
         <p>
@@ -59,6 +59,12 @@ export default async function PrivacyPage() {
           abuzurilor. Zona de administrare folosește autentificare separată și
           este disponibilă numai persoanelor autorizate.
         </p>
+        <p>
+          Dacă te înscrii la newsletter, păstrăm adresa de email, prenumele
+          opțional, sursa înscrierii, data consimțământului și starea abonării.
+          Aceste date nu sunt folosite pentru campanii fără acordul separat
+          bifat în formular.
+        </p>
 
         <h2>3. Scopurile și temeiurile prelucrării</h2>
         <ul className="legal-list">
@@ -66,7 +72,7 @@ export default async function PrivacyPage() {
           <li>emiterea documentelor și păstrarea evidențelor cerute de lege — obligație legală;</li>
           <li>prevenirea fraudelor, protejarea stocului și securizarea serviciului — interes legitim;</li>
           <li>răspunsul la solicitări și gestionarea reclamațiilor — contract, obligație legală sau interes legitim, după caz;</li>
-          <li>mesaje de marketing — numai după activarea funcției și obținerea consimțământului separat.</li>
+          <li>mesaje de marketing și campanii de sezon — numai după consimțământul separat, care poate fi retras oricând prin linkul de dezabonare.</li>
         </ul>
 
         <h2>4. Cui putem transmite datele</h2>
@@ -84,8 +90,10 @@ export default async function PrivacyPage() {
           necesară executării contractului și apoi pentru perioadele impuse de
           legislația fiscală, contabilă și de protecție a consumatorilor.
           Mesajele fără legătură cu o comandă sunt șterse când nu mai sunt
-          necesare. Datele tehnice de securitate sunt păstrate pentru perioade
-          scurte și apoi eliminate sau agregate.
+          necesare. Datele de newsletter sunt păstrate până la dezabonare sau
+          până când solicitarea de ștergere este soluționată. Datele tehnice de
+          securitate sunt păstrate pentru perioade scurte și apoi eliminate sau
+          agregate.
         </p>
 
         <h2>6. Transferuri internaționale</h2>

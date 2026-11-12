@@ -30,6 +30,9 @@ import { AdminHeroSettings } from "./admin-hero-settings";
 import type { HeroSettings } from "../lib/hero-settings";
 import type { HomepageSettings } from "../lib/homepage-settings";
 import { AdminHomepageSettings } from "./admin-homepage-settings";
+import { AdminEmailCampaigns } from "./admin-email-campaigns";
+import type { MarketingOverview } from "../lib/marketing-email-service";
+import type { NewsletterSubscriber } from "../lib/newsletter-model";
 
 type AdminTab =
   | "overview"
@@ -42,6 +45,7 @@ type AdminTab =
   | "hero"
   | "store"
   | "messages"
+  | "campaigns"
   | "infrastructure";
 
 const tabLabels: Record<AdminTab, string> = {
@@ -55,6 +59,7 @@ const tabLabels: Record<AdminTab, string> = {
   hero: "Hero & teme",
   store: "Date magazin",
   messages: "Mesaje",
+  campaigns: "Email & campanii",
   infrastructure: "Infrastructură",
 };
 
@@ -66,6 +71,8 @@ type AdminDashboardProps = {
   initialContactMessages: ContactMessage[];
   initialHeroSettings: HeroSettings;
   initialHomepageSettings: HomepageSettings;
+  initialMarketingOverview: MarketingOverview;
+  initialNewsletterSubscribers: NewsletterSubscriber[];
   initialLaunchReadiness: LaunchReadiness;
   userName: string;
   signOutHref: string;
@@ -79,6 +86,8 @@ export function AdminDashboard({
   initialContactMessages,
   initialHeroSettings,
   initialHomepageSettings,
+  initialMarketingOverview,
+  initialNewsletterSubscribers,
   initialLaunchReadiness,
   userName,
   signOutHref,
@@ -141,7 +150,7 @@ export function AdminDashboard({
         <nav aria-label="Administrare magazin">
           {(Object.keys(tabLabels) as AdminTab[]).map((item) => (
             <button className={tab === item ? "admin-nav admin-nav--active" : "admin-nav"} onClick={() => setTab(item)} key={item}>
-              <i>{item === "overview" ? "⌂" : item === "launch" ? "↗" : item === "products" ? "□" : item === "collections" ? "⌘" : item === "orders" ? "≡" : item === "shipping" ? "◇" : item === "homepage" ? "◫" : item === "hero" ? "✦" : item === "store" ? "◎" : item === "messages" ? "✉" : "⇄"}</i>
+              <i>{item === "overview" ? "⌂" : item === "launch" ? "↗" : item === "products" ? "□" : item === "collections" ? "⌘" : item === "orders" ? "≡" : item === "shipping" ? "◇" : item === "homepage" ? "◫" : item === "hero" ? "✦" : item === "store" ? "◎" : item === "messages" ? "✉" : item === "campaigns" ? "@" : "⇄"}</i>
               {tabLabels[item]}
             </button>
           ))}
@@ -251,6 +260,13 @@ export function AdminDashboard({
           <AdminContactMessages
             messages={contactMessages}
             onChange={setContactMessages}
+          />
+        )}
+
+        {tab === "campaigns" && (
+          <AdminEmailCampaigns
+            initialOverview={initialMarketingOverview}
+            initialSubscribers={initialNewsletterSubscribers}
           />
         )}
 

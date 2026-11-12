@@ -150,7 +150,7 @@ export function AdminInfrastructure({
     <section className="admin-infrastructure">
       <div className="admin-infrastructure__hero">
         <div>
-          <p className="eyebrow eyebrow--gold">V1.9 · Netlify + Supabase</p>
+          <p className="eyebrow eyebrow--gold">V1.16.4 · Netlify + Supabase</p>
           <h2>Datele magazinului rămân ale voastre.</h2>
           <p>
             Produsele, comenzile, membrii, adresele salvate, setările, mesajele
@@ -242,7 +242,8 @@ export function AdminInfrastructure({
               <p>
                 {summary.products} produse, {summary.orders} comenzi,{" "}
                 {summary.members} membri, {summary.addresses} adrese,{" "}
-                {summary.messages} mesaje și {summary.mediaFiles} fișiere media.
+                {summary.messages} mesaje, {summary.newsletterSubscribers}{" "}
+                abonați și {summary.mediaFiles} fișiere media.
               </p>
               {summary.warnings.length > 0 && (
                 <small>{summary.warnings.join(" ")}</small>

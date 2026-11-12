@@ -3,7 +3,7 @@
 Magazin online React pentru lumânări artizanale, cu o direcție vizuală în mov
 închis, lumină caldă și accente aurii.
 
-Versiunea curentă este **V1.16.0**. Include magazinul public, catalogul cu variante,
+Versiunea curentă este **V1.16.4**. Include magazinul public, catalogul cu variante,
 coșul persistent, checkout-ul cu ramburs și Stripe, administrarea comenzilor și
 stocului, livrarea configurabilă, paginile legale, centrul de lansare, backupul
 portabil, adaptorul Supabase și autentificarea Membru/Administrator. Homepage-ul
@@ -19,6 +19,10 @@ afișează feedback clar, evită stările false înainte de încărcarea coșulu
 păstrează aceeași încercare de checkout la erorile de rețea pentru a preveni
 comenzile duplicate. Produsele incomplete nu sunt publicate, iar checkout-ul
 rămâne disponibil în perioada în care datele comerciantului sunt completate.
+Hero-ul sezonier umple primul ecran și are focalizare/mărire reglabile din
+Admin. Efectele ambientale sunt opționale per temă (ninsoare, inimi, petale,
+frunze sau sclipiri). Footerul include abonarea cu consimțământ, iar Admin oferă
+sincronizarea listei și compunerea campaniilor de sezon.
 
 ## Cerințe
 
@@ -75,6 +79,8 @@ validarea artefactului de producție.
 - **V1.14** — emailuri finisate, notificări Contact și șabloane Supabase Auth
 - **V1.15** — coș, checkout și experiență mobilă finisate pentru testarea finală
 - **V1.16.0** — audit public, catalog verificat și stabilizarea fluxurilor de comandă
+- **V1.16.3** — diagnoză, efect de ninsoare și pregătirea campaniei de Crăciun
+- **V1.16.4** — hero full-screen, efecte per temă, newsletter și campanii email
 
 Versiunea găzduită în Sites folosește D1 pentru date și R2 pentru imaginile
 încărcate. Exportul din Admin păstrează catalogul complet și toate

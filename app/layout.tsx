@@ -145,8 +145,10 @@ export default async function RootLayout({
           freeShippingThreshold={shippingSettings.freeShippingThreshold}
           products={products}
           storeProfile={storeProfile}
-          accountViewer={accountViewer}
-        >
+          accountViewer={accountViewer} 
+          effect={"none"} 
+          effectIntensity={"subtle"} 
+          themeId={""}        >
           {children}
         </SiteShell>
       </body>

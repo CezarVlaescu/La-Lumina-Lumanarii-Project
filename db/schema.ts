@@ -305,3 +305,31 @@ export const contactMessages = sqliteTable(
     index("contact_messages_status_idx").on(table.status),
   ],
 );
+
+export const newsletterSubscribers = sqliteTable(
+  "newsletter_subscribers",
+  {
+    email: text("email").primaryKey(),
+    firstName: text("first_name").notNull().default(""),
+    status: text("status", { enum: ["subscribed", "unsubscribed"] })
+      .notNull()
+      .default("subscribed"),
+    source: text("source").notNull().default("footer"),
+    consentAt: text("consent_at").notNull(),
+    unsubscribedAt: text("unsubscribed_at"),
+    providerContactId: text("provider_contact_id"),
+    syncStatus: text("sync_status", {
+      enum: ["pending", "synced", "failed"],
+    })
+      .notNull()
+      .default("pending"),
+    lastError: text("last_error"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("newsletter_subscribers_status_idx").on(table.status),
+    index("newsletter_subscribers_sync_status_idx").on(table.syncStatus),
+    index("newsletter_subscribers_created_at_idx").on(table.createdAt),
+  ],
+);

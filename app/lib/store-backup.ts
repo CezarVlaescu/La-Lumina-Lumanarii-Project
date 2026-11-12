@@ -10,7 +10,7 @@ import {
 } from "./supabase-server";
 
 export const STORE_BACKUP_FORMAT = "la-lumina-lumanarii";
-export const STORE_BACKUP_VERSION = 2;
+export const STORE_BACKUP_VERSION = 3;
 
 const MAX_BACKUP_ROWS = 25_000;
 const MAX_MEDIA_FILES = 500;
@@ -184,6 +184,22 @@ const backupTableSpecs = {
       "updated_at",
     ],
   },
+  newsletter_subscribers: {
+    primaryKey: "email",
+    columns: [
+      "email",
+      "first_name",
+      "status",
+      "source",
+      "consent_at",
+      "unsubscribed_at",
+      "provider_contact_id",
+      "sync_status",
+      "last_error",
+      "created_at",
+      "updated_at",
+    ],
+  },
 } as const;
 
 type BackupTableName = keyof typeof backupTableSpecs;
@@ -199,7 +215,7 @@ export type BackupMediaFile = {
 
 export type StoreBackup = {
   format: typeof STORE_BACKUP_FORMAT;
-  version: 1 | typeof STORE_BACKUP_VERSION;
+  version: 1 | 2 | typeof STORE_BACKUP_VERSION;
   exportedAt: string;
   source: "sites-d1-r2" | "netlify-supabase";
   catalog: unknown[];
@@ -217,6 +233,7 @@ export type StoreBackupSummary = {
   settings: number;
   members: number;
   addresses: number;
+  newsletterSubscribers: number;
   mediaFiles: number;
   embeddedMediaFiles: number;
   warnings: string[];
@@ -435,6 +452,7 @@ export function summarizeStoreBackup(backup: StoreBackup): StoreBackupSummary {
     settings: backup.tables.store_settings.length,
     members: backup.tables.customer_profiles.length,
     addresses: backup.tables.customer_addresses.length,
+    newsletterSubscribers: backup.tables.newsletter_subscribers.length,
     mediaFiles: backup.media.length,
     embeddedMediaFiles: backup.media.filter((file) => file.dataBase64).length,
     warnings: backup.warnings,
@@ -526,9 +544,14 @@ export function validateStoreBackup(value: unknown): StoreBackup {
   if (value.format !== STORE_BACKUP_FORMAT) {
     throw new Error("Fișierul nu aparține magazinului La Lumina Lumânării.");
   }
-  if (value.version !== 1 && value.version !== STORE_BACKUP_VERSION) {
+  if (
+    value.version !== 1 &&
+    value.version !== 2 &&
+    value.version !== STORE_BACKUP_VERSION
+  ) {
     throw new Error("Versiunea backupului nu este compatibilă.");
   }
+  const backupVersion = value.version as 1 | 2 | typeof STORE_BACKUP_VERSION;
   if (
     typeof value.exportedAt !== "string" ||
     Number.isNaN(Date.parse(value.exportedAt))
@@ -554,7 +577,7 @@ export function validateStoreBackup(value: unknown): StoreBackup {
       );
     }
   });
-  const isLegacyBackup = value.version === 1;
+  const isLegacyBackup = backupVersion === 1;
   const tables = Object.fromEntries(
     (Object.keys(backupTableSpecs) as BackupTableName[]).map((tableName) => [
       tableName,
@@ -562,6 +585,10 @@ export function validateStoreBackup(value: unknown): StoreBackup {
       (tableName === "customer_profiles" ||
         tableName === "customer_addresses") &&
       rawTables[tableName] === undefined
+        ? []
+        : backupVersion < 3 &&
+            tableName === "newsletter_subscribers" &&
+            rawTables[tableName] === undefined
         ? []
         : validatedTableRows(rawTables[tableName], tableName),
     ]),

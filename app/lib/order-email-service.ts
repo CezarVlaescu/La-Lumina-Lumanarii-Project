@@ -14,6 +14,10 @@ import {
   isSupabaseConfigured,
   supabaseRest,
 } from "./supabase-server";
+import {
+  configuredNotificationEmails,
+  emailEventFragment,
+} from "./notification-recipients";
 
 type EmailDeliveryRow = typeof storeEmailDeliveries.$inferSelect;
 type SupabaseEmailRow = Record<string, unknown>;
@@ -22,24 +26,8 @@ type DeliveryDefinition = {
   eventKey: string;
   kind: EmailDeliveryKind;
   orderStatus: OrderStatus | null;
+  recipient: string;
 };
-
-function configuredNotificationEmail() {
-  const env = getRuntimeEnv();
-  const explicit = env.STORE_NOTIFICATION_EMAIL?.trim();
-  if (explicit) return explicit;
-  return (
-    env.ADMIN_EMAILS?.split(",")
-      .map((email) => email.trim())
-      .find(Boolean) ?? ""
-  );
-}
-
-function recipientFor(order: AdminOrder, kind: EmailDeliveryKind) {
-  return kind === "admin_new_order"
-    ? configuredNotificationEmail()
-    : order.customerEmail;
-}
 
 function toAdminDelivery(row: EmailDeliveryRow): OrderEmailDelivery {
   return {
@@ -105,7 +93,7 @@ async function ensureDelivery(
     definition.kind,
     definition.orderStatus,
   );
-  const recipient = recipientFor(order, definition.kind);
+  const recipient = definition.recipient;
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
     await supabaseRest(
@@ -203,7 +191,7 @@ async function sendDelivery(
   const env = getRuntimeEnv();
   const apiKey = env.RESEND_API_KEY?.trim() ?? "";
   const from = env.STORE_EMAIL_FROM?.trim() ?? "";
-  const recipient = recipientFor(order, delivery.kind);
+  const recipient = delivery.recipient;
   const message = buildOrderEmail(
     order,
     delivery.kind,
@@ -333,17 +321,29 @@ async function requireOrder(orderId: string) {
 
 export async function deliverNewOrderEmails(orderId: string) {
   const order = await requireOrder(orderId);
+  const adminRecipients = configuredNotificationEmails();
   const definitions: DeliveryDefinition[] = [
     {
       eventKey: `${order.id}:customer:created`,
       kind: "customer_order_confirmation",
       orderStatus: "new",
+      recipient: order.customerEmail,
     },
-    {
-      eventKey: `${order.id}:admin:created`,
-      kind: "admin_new_order",
-      orderStatus: "new",
-    },
+    ...(adminRecipients.length
+      ? adminRecipients.map((recipient) => ({
+          eventKey: `${order.id}:admin:created:${emailEventFragment(recipient)}`,
+          kind: "admin_new_order" as const,
+          orderStatus: "new" as const,
+          recipient,
+        }))
+      : [
+          {
+            eventKey: `${order.id}:admin:created:unconfigured`,
+            kind: "admin_new_order" as const,
+            orderStatus: "new" as const,
+            recipient: "",
+          },
+        ]),
   ];
   const deliveries = await Promise.all(
     definitions.map((definition) => ensureDelivery(order, definition)),
@@ -363,6 +363,7 @@ export async function deliverOrderStatusEmail(
     eventKey: `${order.id}:customer:status:${status}`,
     kind: "customer_status_update",
     orderStatus: status,
+    recipient: order.customerEmail,
   });
   return sendDelivery(order, delivery);
 }

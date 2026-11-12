@@ -16,7 +16,13 @@ import {
 } from "../lib/catalog";
 import type { StoreProfile } from "../lib/store-profile";
 import type { AccountViewer } from "../lib/account-types";
+import type {
+  ThemeEffect,
+  ThemeEffectIntensity,
+} from "../lib/hero-settings";
 import { CookieNotice } from "./cookie-notice";
+import { SeasonalEffect } from "./seasonal-effect";
+import { NewsletterForm } from "./newsletter-form";
 import {
   AccountIcon,
   AdminIcon,
@@ -36,9 +42,11 @@ const navigation = [
 function Header({
   accountViewer,
   freeShippingThreshold,
+  themeId,
 }: {
   accountViewer: AccountViewer | null;
   freeShippingThreshold: number;
+  themeId: string;
 }) {
   const pathname = usePathname();
   const { itemCount, setCartOpen } = useStore();
@@ -52,11 +60,28 @@ function Header({
   return (
     <>
       <div className="announcement">
-        <span>
-          Livrare gratuită la comenzi de minimum{" "}
-          {freeShippingThreshold.toLocaleString("ro-RO")} lei
-        </span>
-        <span className="announcement__extra">• Ambalare atentă pentru fiecare comandă</span>
+        {themeId === "craciun" ? (
+          <>
+            <span className="announcement__seasonal">
+              Colecția de Crăciun este disponibilă acum
+            </span>
+            <span className="announcement__extra">
+              • Livrare gratuită de la{" "}
+              {freeShippingThreshold.toLocaleString("ro-RO")} lei · Ambalare
+              atentă pentru fiecare comandă
+            </span>
+          </>
+        ) : (
+          <>
+            <span>
+              Livrare gratuită la comenzi de minimum{" "}
+              {freeShippingThreshold.toLocaleString("ro-RO")} lei
+            </span>
+            <span className="announcement__extra">
+              • Ambalare atentă pentru fiecare comandă
+            </span>
+          </>
+        )}
       </div>
       <header className="site-header">
         <Link className="brand" href="/" aria-label="La Lumina Lumânării, pagina principală">
@@ -66,6 +91,7 @@ function Header({
             alt=""
             width={38}
             height={38}
+            unoptimized
             priority
           />
           <span>La Lumina Lumânării</span>
@@ -383,6 +409,16 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
     .join(" · ");
   return (
     <footer className="footer">
+      <section className="footer__newsletter page-shell" aria-labelledby="newsletter-title">
+        <div>
+          <p className="eyebrow eyebrow--gold">Scrisori din atelier</p>
+          <h2 id="newsletter-title">Noutăți pentru fiecare anotimp.</h2>
+          <p>
+            Colecții noi, povești din atelier și campanii de sezon — rar și cu rost.
+          </p>
+        </div>
+        <NewsletterForm />
+      </section>
       <div className="footer__main page-shell">
         <div className="footer__brand">
           <Link className="brand" href="/">
@@ -392,6 +428,7 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
               alt=""
               width={38}
               height={38}
+              unoptimized
             />
             <span>La Lumina Lumânării</span>
           </Link>
@@ -433,26 +470,34 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
 
 export function SiteShell({
   children,
+  effect,
+  effectIntensity,
   freeShippingThreshold,
   products,
   storeProfile,
   accountViewer,
+  themeId,
 }: {
   children: React.ReactNode;
+  effect: ThemeEffect;
+  effectIntensity: ThemeEffectIntensity;
   freeShippingThreshold: number;
   products: Product[];
   storeProfile: StoreProfile;
   accountViewer: AccountViewer | null;
+  themeId: string;
 }) {
   const pathname = usePathname();
   if (pathname.startsWith("/admin")) return <>{children}</>;
 
   return (
     <StoreProvider products={products}>
+      <SeasonalEffect effect={effect} intensity={effectIntensity} />
       <Header
         key={pathname}
         accountViewer={accountViewer}
         freeShippingThreshold={freeShippingThreshold}
+        themeId={themeId}
       />
       {children}
       <Footer storeProfile={storeProfile} />

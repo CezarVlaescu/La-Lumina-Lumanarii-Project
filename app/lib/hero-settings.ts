@@ -3,6 +3,15 @@ import {
   writeStoreSetting,
 } from "./settings-repository";
 
+export type ThemeEffect =
+  | "none"
+  | "snow"
+  | "hearts"
+  | "petals"
+  | "leaves"
+  | "sparkles";
+export type ThemeEffectIntensity = "subtle" | "balanced" | "festive";
+
 export type HeroTheme = {
   id: string;
   name: string;
@@ -11,6 +20,9 @@ export type HeroTheme = {
   endsAt: string;
   desktopImage: string;
   mobileImage: string;
+  imagePositionX: number;
+  imagePositionY: number;
+  imageScale: number;
   imageAlt: string;
   eyebrow: string;
   title: string;
@@ -25,6 +37,8 @@ export type HeroTheme = {
   accentColor: string;
   accentSoftColor: string;
   overlayColor: string;
+  effect: ThemeEffect;
+  effectIntensity: ThemeEffectIntensity;
 };
 
 export type HeroSettings = {
@@ -41,6 +55,9 @@ const standardTheme: HeroTheme = {
   endsAt: "",
   desktopImage: "/images/hero-ritual-nocturn.webp",
   mobileImage: "/images/hero-ritual-nocturn.webp",
+  imagePositionX: 50,
+  imagePositionY: 50,
+  imageScale: 1.06,
   imageAlt: "Lumânare artizanală într-un decor nocturn mov",
   eyebrow: "Lumânări realizate manual",
   title: "Forme decorative, finisate manual.",
@@ -56,6 +73,8 @@ const standardTheme: HeroTheme = {
   accentColor: "#d9953d",
   accentSoftColor: "#f0bd72",
   overlayColor: "#0c0610",
+  effect: "none",
+  effectIntensity: "balanced",
 };
 
 function collectionTheme(
@@ -93,6 +112,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#d982a3",
       accentSoftColor: "#c9dca7",
       overlayColor: "#101a13",
+      effect: "petals",
+      effectIntensity: "subtle",
     }),
     collectionTheme("8-martie", "8 Martie", {
       imageAlt: "Buchet elegant de flori în lumină caldă de început de martie",
@@ -107,6 +128,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#c95f7d",
       accentSoftColor: "#efb7a6",
       overlayColor: "#210f19",
+      effect: "petals",
+      effectIntensity: "balanced",
     }),
     collectionTheme("valentines", "Valentine’s Day", {
       imageAlt: "Trandafiri și catifea într-un decor romantic sofisticat",
@@ -121,6 +144,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#c73752",
       accentSoftColor: "#f3a0aa",
       overlayColor: "#19070d",
+      effect: "hearts",
+      effectIntensity: "balanced",
     }),
     collectionTheme("floral", "Floral", {
       imageAlt: "Flori de grădină și frunze într-o compoziție botanică",
@@ -135,6 +160,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#9b72b2",
       accentSoftColor: "#d2b8dc",
       overlayColor: "#101813",
+      effect: "petals",
+      effectIntensity: "subtle",
     }),
     collectionTheme("paste", "Paște", {
       imageAlt: "Ouă pictate și ramuri înflorite într-un decor de Paște",
@@ -149,6 +176,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#e7a7b7",
       accentSoftColor: "#b9d8b1",
       overlayColor: "#25121f",
+      effect: "petals",
+      effectIntensity: "subtle",
     }),
     collectionTheme("vara", "Vară", {
       imageAlt: "Terasă mediteraneană luminoasă cu vedere spre mare",
@@ -163,6 +192,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#e97955",
       accentSoftColor: "#f4c86d",
       overlayColor: "#071a22",
+      effect: "sparkles",
+      effectIntensity: "subtle",
     }),
     collectionTheme("toamna", "Toamnă", {
       imageAlt: "Frunze ruginii, dovleci și lumină arămie de toamnă",
@@ -177,6 +208,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#c66b2f",
       accentSoftColor: "#e6ae64",
       overlayColor: "#1b0f09",
+      effect: "leaves",
+      effectIntensity: "balanced",
     }),
     collectionTheme("halloween", "Halloween", {
       imageAlt: "Dovleci sculptați într-un decor misterios de Halloween",
@@ -191,6 +224,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#e46f24",
       accentSoftColor: "#b6ce5a",
       overlayColor: "#100914",
+      effect: "sparkles",
+      effectIntensity: "balanced",
     }),
     collectionTheme("iarna", "Iarnă", {
       imageAlt: "Peisaj liniștit de iarnă cu zăpadă și lumină albastră",
@@ -205,6 +240,8 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#7fa7ca",
       accentSoftColor: "#d8e8f4",
       overlayColor: "#091321",
+      effect: "snow",
+      effectIntensity: "subtle",
     }),
     collectionTheme("craciun", "Crăciun", {
       imageAlt: "Brad împodobit și lumini aurii într-un decor de Crăciun",
@@ -219,6 +256,11 @@ export const defaultHeroSettings: HeroSettings = {
       accentColor: "#d7a84a",
       accentSoftColor: "#efcd7e",
       overlayColor: "#07140f",
+      imagePositionX: 58,
+      imagePositionY: 50,
+      imageScale: 1.12,
+      effect: "snow",
+      effectIntensity: "festive",
     }),
     collectionTheme("animale", "Animale", {
       imageAlt: "Animale de pădure într-un decor natural, cald și jucăuș",
@@ -282,6 +324,38 @@ function color(value: unknown, fallback: string) {
     : fallback;
 }
 
+function boundedNumber(
+  value: unknown,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+) {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number)
+    ? Math.min(maximum, Math.max(minimum, number))
+    : fallback;
+}
+
+function themeEffect(value: unknown, fallback: ThemeEffect): ThemeEffect {
+  return value === "snow" ||
+    value === "hearts" ||
+    value === "petals" ||
+    value === "leaves" ||
+    value === "sparkles" ||
+    value === "none"
+    ? value
+    : fallback;
+}
+
+function themeEffectIntensity(
+  value: unknown,
+  fallback: ThemeEffectIntensity,
+): ThemeEffectIntensity {
+  return value === "subtle" || value === "balanced" || value === "festive"
+    ? value
+    : fallback;
+}
+
 function normalizeTheme(value: unknown, fallback: HeroTheme): HeroTheme {
   const candidate =
     value && typeof value === "object"
@@ -300,6 +374,24 @@ function normalizeTheme(value: unknown, fallback: HeroTheme): HeroTheme {
     endsAt: optionalDate(candidate.endsAt),
     desktopImage: imageUrl(candidate.desktopImage, fallback.desktopImage),
     mobileImage: imageUrl(candidate.mobileImage, fallback.mobileImage),
+    imagePositionX: boundedNumber(
+      candidate.imagePositionX,
+      fallback.imagePositionX,
+      0,
+      100,
+    ),
+    imagePositionY: boundedNumber(
+      candidate.imagePositionY,
+      fallback.imagePositionY,
+      0,
+      100,
+    ),
+    imageScale: boundedNumber(
+      candidate.imageScale,
+      fallback.imageScale,
+      1,
+      1.25,
+    ),
     imageAlt: text(candidate.imageAlt, fallback.imageAlt, 180),
     eyebrow: text(candidate.eyebrow, fallback.eyebrow, 90),
     title: text(candidate.title, fallback.title, 130),
@@ -327,6 +419,11 @@ function normalizeTheme(value: unknown, fallback: HeroTheme): HeroTheme {
       fallback.accentSoftColor,
     ),
     overlayColor: color(candidate.overlayColor, fallback.overlayColor),
+    effect: themeEffect(candidate.effect, fallback.effect),
+    effectIntensity: themeEffectIntensity(
+      candidate.effectIntensity,
+      fallback.effectIntensity,
+    ),
   };
 }
 
