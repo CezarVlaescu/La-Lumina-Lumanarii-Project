@@ -11,6 +11,10 @@ import type {
 } from "./order-types";
 import { getRuntimeEnv } from "./runtime-env";
 import {
+  isEmailProviderConfigured,
+  sendStoreEmail,
+} from "./email-provider";
+import {
   isSupabaseConfigured,
   supabaseRest,
 } from "./supabase-server";
@@ -189,7 +193,6 @@ async function sendDelivery(
   if (delivery.status === "sent") return toAdminDelivery(delivery);
 
   const env = getRuntimeEnv();
-  const apiKey = env.RESEND_API_KEY?.trim() ?? "";
   const from = env.STORE_EMAIL_FROM?.trim() ?? "";
   const recipient = delivery.recipient;
   const message = buildOrderEmail(
@@ -197,13 +200,14 @@ async function sendDelivery(
     delivery.kind,
     delivery.orderStatus,
   );
-  const replyTo =
-    delivery.kind === "admin_new_order" ? order.customerEmail : "";
+  const replyTo = delivery.kind === "admin_new_order"
+    ? order.customerEmail
+    : configuredNotificationEmails()[0] ?? "";
   const now = new Date().toISOString();
 
-  if (!apiKey || !from || !recipient) {
+  if (!isEmailProviderConfigured() || !from || !recipient) {
     const missing = [
-      !apiKey ? "cheia serviciului de email" : "",
+      !isEmailProviderConfigured() ? "configurarea serviciului de email" : "",
       !from ? "adresa expeditorului" : "",
       !recipient ? "adresa destinatarului" : "",
     ].filter(Boolean);
@@ -235,37 +239,22 @@ async function sendDelivery(
   });
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-        "idempotency-key": delivery.eventKey,
-      },
-      body: JSON.stringify({
-        from,
-        to: [recipient],
-        ...(replyTo ? { reply_to: replyTo } : {}),
-        subject: message.subject,
-        html: message.html,
-        text: message.text,
-        tags: [
-          { name: "order", value: order.orderNumber.replace(/[^a-zA-Z0-9_-]/g, "-") },
-          { name: "kind", value: delivery.kind },
-        ],
-      }),
-      signal: AbortSignal.timeout(8_000),
+    const result = await sendStoreEmail({
+      from,
+      to: recipient,
+      replyTo,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+      idempotencyKey: delivery.eventKey,
+      tags: [
+        {
+          name: "order",
+          value: order.orderNumber.replace(/[^a-zA-Z0-9_-]/g, "-"),
+        },
+        { name: "kind", value: delivery.kind },
+      ],
     });
-    const result = (await response.json().catch(() => ({}))) as {
-      id?: string;
-      message?: string;
-      name?: string;
-    };
-    if (!response.ok || !result.id) {
-      throw new Error(
-        result.message || result.name || `Serviciul de email a răspuns cu ${response.status}.`,
-      );
-    }
 
     const sentAt = new Date().toISOString();
     await updateDelivery(delivery.id, {

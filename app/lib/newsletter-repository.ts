@@ -157,3 +157,35 @@ export async function updateNewsletterSync(
     .set({ ...values, updatedAt })
     .where(eq(newsletterSubscribers.email, email));
 }
+
+export async function unsubscribeFromNewsletter(email: string) {
+  const normalizedEmail = email.trim().toLocaleLowerCase("ro-RO");
+  const now = new Date().toISOString();
+  if (isSupabaseConfigured()) {
+    await supabaseRest(
+      `newsletter_subscribers?email=eq.${encodeURIComponent(normalizedEmail)}`,
+      {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: JSON.stringify({
+          status: "unsubscribed",
+          unsubscribed_at: now,
+          sync_status: "pending",
+          last_error: null,
+          updated_at: now,
+        }),
+      },
+    );
+    return;
+  }
+  await getDb()
+    .update(newsletterSubscribers)
+    .set({
+      status: "unsubscribed",
+      unsubscribedAt: now,
+      syncStatus: "pending",
+      lastError: null,
+      updatedAt: now,
+    })
+    .where(eq(newsletterSubscribers.email, normalizedEmail));
+}

@@ -141,17 +141,17 @@ export default async function RootLayout({
             ),
           }}
         />
-<SiteShell
-  effect={activeTheme.effect}
-  effectIntensity={activeTheme.effectIntensity}
-  freeShippingThreshold={shippingSettings.freeShippingThreshold}
-  products={products}
-  storeProfile={storeProfile}
-  accountViewer={accountViewer}
-  themeId={activeTheme.id}
->
-  {children}
-</SiteShell>
+        <SiteShell
+          freeShippingThreshold={shippingSettings.freeShippingThreshold}
+          products={products}
+          storeProfile={storeProfile}
+          accountViewer={accountViewer}
+          effect={activeTheme.effect}
+          effectIntensity={activeTheme.effectIntensity}
+          themeId={activeTheme.id}
+        >
+          {children}
+        </SiteShell>
       </body>
     </html>
   );

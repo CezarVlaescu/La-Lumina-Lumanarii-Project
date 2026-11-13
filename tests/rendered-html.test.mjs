@@ -139,6 +139,40 @@ test("prepares draft, immediate and scheduled campaigns safely", async () => {
   assert.match(adminCampaigns, /window\.confirm/);
 });
 
+test("connects the active theme and supports Gmail campaigns with signed unsubscribe links", async () => {
+  const [layout, provider, service, campaigns, unsubscribe] = await Promise.all([
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/email-provider.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/lib/marketing-email-service.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/components/admin-email-campaigns.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/lib/newsletter-unsubscribe.ts", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(layout, /effect=\{activeTheme\.effect\}/);
+  assert.match(layout, /effectIntensity=\{activeTheme\.effectIntensity\}/);
+  assert.match(layout, /themeId=\{activeTheme\.id\}/);
+  assert.match(provider, /nodemailer\.createTransport/);
+  assert.match(provider, /configuredEmailProvider\(\) === "smtp"/);
+  assert.match(provider, /https:\/\/api\.resend\.com\/emails/);
+  assert.match(service, /smtpCampaignLimit\s*=\s*50/);
+  assert.match(service, /newsletterUnsubscribeUrl\(subscriber\.email\)/);
+  assert.match(campaigns, /Lansarea colecției/);
+  assert.match(campaigns, /Ghid de cadouri/);
+  assert.match(campaigns, /Ultimele comenzi/);
+  assert.match(campaigns, /Mulțumire de sărbători/);
+  assert.match(unsubscribe, /createHmac\("sha256"/);
+  assert.match(unsubscribe, /timingSafeEqual/);
+});
+
 test("renders the public storefront routes", async () => {
   const routes = [
     "/",
@@ -158,6 +192,7 @@ test("renders the public storefront routes", async () => {
     "/cont",
     "/cont/autentificare",
     "/cont/resetare-parola",
+    "/newsletter/dezabonare?status=success",
   ];
 
   for (const route of routes) {

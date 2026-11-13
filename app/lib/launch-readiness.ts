@@ -11,6 +11,7 @@ import { siteUrl } from "./site-config";
 import type { StoreProfile } from "./store-profile";
 import { isSupabaseConfigured } from "./supabase-server";
 import { configuredNotificationEmails } from "./notification-recipients";
+import { isEmailProviderConfigured } from "./email-provider";
 
 function runtimeConfiguration() {
   try {
@@ -29,7 +30,7 @@ function runtimeConfiguration() {
     return {
       admin: isSupabaseConfigured() || Boolean(env.ADMIN_EMAILS?.trim()),
       email: Boolean(
-        env.RESEND_API_KEY?.trim() &&
+        isEmailProviderConfigured() &&
           env.STORE_EMAIL_FROM?.trim() &&
           configuredNotificationEmails().length,
       ),

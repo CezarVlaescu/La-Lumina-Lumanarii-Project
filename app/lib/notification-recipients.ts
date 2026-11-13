@@ -2,7 +2,8 @@ import { getRuntimeEnv } from "./runtime-env";
 
 export function configuredNotificationEmails() {
   const env = getRuntimeEnv();
-  const values = [env.STORE_NOTIFICATION_EMAIL, env.ADMIN_EMAILS]
+  const configured = env.STORE_NOTIFICATION_EMAIL?.trim();
+  const values = [configured || env.ADMIN_EMAILS]
     .filter(Boolean)
     .flatMap((value) => value!.split(/[;,]/))
     .map((email) => email.trim())

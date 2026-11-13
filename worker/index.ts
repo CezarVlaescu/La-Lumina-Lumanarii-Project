@@ -10,11 +10,18 @@ interface Env {
   ADMIN_EMAILS?: string;
   ADMIN_SESSION_SECRET?: string;
   ACCOUNT_SESSION_SECRET?: string;
+  EMAIL_PROVIDER?: string;
+  SMTP_HOST?: string;
+  SMTP_PORT?: string;
+  SMTP_SECURE?: string;
+  SMTP_USER?: string;
+  SMTP_PASSWORD?: string;
   RESEND_API_KEY?: string;
   STORE_EMAIL_FROM?: string;
   STORE_MARKETING_EMAIL_FROM?: string;
   STORE_NOTIFICATION_EMAIL?: string;
   RESEND_MARKETING_SEGMENT_ID?: string;
+  NEWSLETTER_SIGNING_SECRET?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   NEXT_PUBLIC_SUPABASE_URL?: string;

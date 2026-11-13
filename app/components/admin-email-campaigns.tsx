@@ -12,16 +12,77 @@ type AdminEmailCampaignsProps = {
   initialSubscribers: NewsletterSubscriber[];
 };
 
-const christmasPreset = {
-  name: "Crăciun 2026 · Aprinde povestea",
-  subject: "Aprinde povestea Crăciunului ✦",
-  preheader: "Colecția de Crăciun prinde lumină în atelier.",
-  headline: "Crăciunul începe cu o lumină.",
-  body: "Am pregătit forme de iarnă, culori calde și mici daruri lucrate manual pentru serile petrecute împreună.\n\nDescoperă colecția și alege lumânarea care își găsește locul în povestea ta de sărbători.",
-  ctaLabel: "Descoperă colecția",
-  ctaHref: "/lumanari?tema=craciun",
-  scheduledAt: "",
+type CampaignDraft = {
+  name: string;
+  subject: string;
+  preheader: string;
+  headline: string;
+  body: string;
+  heroImage: string;
+  ctaLabel: string;
+  ctaHref: string;
+  scheduledAt: string;
 };
+
+type CampaignPreset = CampaignDraft & {
+  id: string;
+  label: string;
+};
+
+const christmasPresets: CampaignPreset[] = [
+  {
+    id: "launch",
+    label: "Lansarea colecției",
+    name: "Crăciun 2026 · Lansarea colecției",
+    subject: "Aprinde povestea Crăciunului ✦",
+    preheader: "Colecția de Crăciun prinde lumină în atelier.",
+    headline: "Crăciunul începe cu o lumină.",
+    body: "Am pregătit forme de iarnă, culori calde și mici daruri lucrate manual pentru serile petrecute împreună.\n\nDescoperă colecția și alege lumânarea care își găsește locul în povestea ta de sărbători.",
+    heroImage: "/images/themes/theme-craciun.webp",
+    ctaLabel: "Descoperă colecția",
+    ctaHref: "/lumanari?tema=craciun",
+    scheduledAt: "",
+  },
+  {
+    id: "gifts",
+    label: "Ghid de cadouri",
+    name: "Crăciun 2026 · Ghid de cadouri",
+    subject: "Daruri mici, alese cu lumină",
+    preheader: "Idei lucrate manual pentru oamenii dragi.",
+    headline: "Un dar care spune: m-am gândit la tine.",
+    body: "Când vrei să dăruiești ceva personal, o lumânare lucrată manual păstrează în ea timp, culoare și grijă.\n\nAm adunat modelele de Crăciun potrivite pentru familie, prieteni și mici gesturi de mulțumire.",
+    heroImage: "/images/products/christmas/christmas-house-02-lifestyle.png",
+    ctaLabel: "Alege un cadou",
+    ctaHref: "/lumanari?tema=craciun",
+    scheduledAt: "",
+  },
+  {
+    id: "last-orders",
+    label: "Ultimele comenzi",
+    name: "Crăciun 2026 · Ultimele comenzi",
+    subject: "Ultimele lumini pregătite înainte de Crăciun",
+    preheader: "Închidem în curând lista comenzilor de sărbători.",
+    headline: "Mai este puțin până la seara de Crăciun.",
+    body: "Lucrăm în loturi mici, iar ultimele modele disponibile sunt pregătite acum în atelier.\n\nDacă vrei să ajungă la timp în povestea ta, trimite comanda cât încă mai avem loc în program.",
+    heroImage: "/images/products/christmas/christmas-cup-01-festive-enhanced.png",
+    ctaLabel: "Vezi ce mai este disponibil",
+    ctaHref: "/lumanari?tema=craciun",
+    scheduledAt: "",
+  },
+  {
+    id: "thank-you",
+    label: "Mulțumire de sărbători",
+    name: "Crăciun 2026 · Mulțumire",
+    subject: "Mulțumim că ai aprins povestea alături de noi",
+    preheader: "Un gând cald din atelier, la final de an.",
+    headline: "Sărbători cu lumină și tihnă.",
+    body: "Fiecare comandă, mesaj și recomandare ne-a ajutat să construim acest atelier pas cu pas. Îți mulțumim că ai ales lucruri făcute în loturi mici, cu răbdare.\n\nÎți dorim seri liniștite, oameni dragi aproape și un Crăciun care să rămână în amintire.",
+    heroImage: "/images/themes/theme-craciun.webp",
+    ctaLabel: "Întoarce-te la poveste",
+    ctaHref: "/",
+    scheduledAt: "",
+  },
+];
 
 async function responseError(response: Response) {
   const result = (await response.json().catch(() => ({}))) as {
@@ -36,12 +97,22 @@ export function AdminEmailCampaigns({
 }: AdminEmailCampaignsProps) {
   const [overview, setOverview] = useState(initialOverview);
   const [subscribers, setSubscribers] = useState(initialSubscribers);
-  const [campaign, setCampaign] = useState(christmasPreset);
+  const [selectedPreset, setSelectedPreset] = useState(christmasPresets[0].id);
+  const [campaign, setCampaign] = useState<CampaignDraft>(christmasPresets[0]);
   const [action, setAction] = useState<CampaignAction>("draft");
   const [sendConfirmed, setSendConfirmed] = useState(false);
   const [busy, setBusy] = useState<"setup" | "sync" | "campaign" | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+
+  const localSmtp = overview.provider === "smtp";
+
+  function choosePreset(preset: CampaignPreset) {
+    setSelectedPreset(preset.id);
+    setCampaign({ ...preset });
+    setNotice("");
+    setError("");
+  }
 
   function updatePayload(result: {
     overview?: MarketingOverview;
@@ -96,7 +167,7 @@ export function AdminEmailCampaigns({
     if (
       action === "send" &&
       !window.confirm(
-        `Campania va fi trimisă acum către segmentul cu ${overview.activeSubscribers} abonați activi. Continuăm?`,
+        `Campania va fi trimisă acum către ${overview.activeSubscribers} abonați activi. Continuăm?`,
       )
     ) {
       return;
@@ -124,15 +195,22 @@ export function AdminEmailCampaigns({
       const result = (await response.json()) as {
         overview: MarketingOverview;
         subscribers: NewsletterSubscriber[];
-        result: { id: string; action: CampaignAction };
+        result: {
+          id: string;
+          action: CampaignAction;
+          sent?: number;
+          failed?: number;
+        };
       };
       updatePayload(result);
       setNotice(
         action === "send"
-          ? "Campania a fost trimisă către serviciul de email."
+          ? `Campania a fost trimisă: ${result.result.sent ?? overview.activeSubscribers} livrări acceptate${result.result.failed ? `, ${result.result.failed} erori` : ""}.`
           : action === "schedule"
             ? "Campania a fost programată."
-            : "Campania a fost salvată ca draft în serviciul de email.",
+            : localSmtp
+              ? "Draftul este valid și pregătit. Cu Gmail, conținutul rămâne în formular până la trimitere."
+              : "Campania a fost salvată ca draft în serviciul de email.",
       );
       setSendConfirmed(false);
     } catch (campaignError) {
@@ -149,77 +227,296 @@ export function AdminEmailCampaigns({
   return (
     <section className="admin-campaigns">
       <div className="admin-campaigns__stats">
-        <article><span>Abonați activi</span><strong>{overview.activeSubscribers}</strong><small>{overview.totalSubscribers} înregistrați în total</small></article>
-        <article><span>De sincronizat</span><strong>{overview.pendingSubscribers}</strong><small>{overview.failedSubscribers} sincronizări cu eroare</small></article>
-        <article><span>Serviciu email</span><strong>{overview.providerConfigured ? "Pregătit" : "Inactiv"}</strong><small>{overview.fromAddress || "Expeditor neconfigurat"}</small></article>
-        <article><span>Segment newsletter</span><strong>{overview.segmentConfigured ? "Conectat" : "Lipsește"}</strong><small>{overview.segmentConfigured ? "Listă pregătită pentru campanii" : "Se creează după configurarea Resend"}</small></article>
+        <article>
+          <span>Abonați activi</span>
+          <strong>{overview.activeSubscribers}</strong>
+          <small>{overview.totalSubscribers} înregistrați în total</small>
+        </article>
+        <article>
+          <span>De sincronizat</span>
+          <strong>{overview.pendingSubscribers}</strong>
+          <small>{overview.failedSubscribers} sincronizări cu eroare</small>
+        </article>
+        <article>
+          <span>Serviciu email</span>
+          <strong>{overview.providerConfigured ? "Pregătit" : "Inactiv"}</strong>
+          <small>{overview.fromAddress || "Expeditor neconfigurat"}</small>
+        </article>
+        <article>
+          <span>Trimitere campanii</span>
+          <strong>{localSmtp ? "Gmail SMTP" : "Resend"}</strong>
+          <small>
+            {localSmtp
+              ? `Listă locală · maximum ${overview.localSendLimit} destinatari`
+              : overview.segmentConfigured
+                ? "Segment conectat și programare activă"
+                : "Segmentul trebuie creat"}
+          </small>
+        </article>
       </div>
 
       <section className="admin-panel admin-campaigns__setup">
         <div>
           <p className="eyebrow eyebrow--gold">Configurare sigură</p>
-          <h2>Abonările se salvează chiar dacă emailurile sunt inactive.</h2>
+          <h2>
+            {localSmtp
+              ? "Gmail este conectat direct la lista locală."
+              : "Abonările se salvează chiar dacă emailurile sunt inactive."}
+          </h2>
           <p>
-            Domeniul propriu nu blochează formularul. După verificarea lui în Resend,
-            creezi segmentul și sincronizezi lista de aici.
+            {localSmtp
+              ? "Poți salva un draft sau trimite acum. Pentru programare și liste mai mari, poți reveni ulterior la Resend."
+              : "După verificarea domeniului în Resend, creezi segmentul și sincronizezi lista de aici."}
           </p>
         </div>
-        <div className="admin-campaigns__setup-actions">
-          <button
-            className="admin-secondary"
-            disabled={busy !== null || overview.segmentConfigured}
-            onClick={() => void adminAction("setup", { action: "setup_segment" })}
-          >
-            {busy === "setup" ? "Se creează…" : overview.segmentConfigured ? "Segment creat" : "Creează segmentul"}
-          </button>
-          <button
-            className="admin-primary"
-            disabled={busy !== null || !overview.providerConfigured || !overview.segmentConfigured}
-            onClick={() => void adminAction("sync", { action: "sync_subscribers" })}
-          >
-            {busy === "sync" ? "Se sincronizează…" : "Sincronizează abonații"}
-          </button>
-        </div>
+        {!localSmtp && (
+          <div className="admin-campaigns__setup-actions">
+            <button
+              className="admin-secondary"
+              disabled={busy !== null || overview.segmentConfigured}
+              onClick={() =>
+                void adminAction("setup", { action: "setup_segment" })
+              }
+            >
+              {busy === "setup"
+                ? "Se creează…"
+                : overview.segmentConfigured
+                  ? "Segment creat"
+                  : "Creează segmentul"}
+            </button>
+            <button
+              className="admin-primary"
+              disabled={
+                busy !== null ||
+                !overview.providerConfigured ||
+                !overview.segmentConfigured
+              }
+              onClick={() =>
+                void adminAction("sync", { action: "sync_subscribers" })
+              }
+            >
+              {busy === "sync"
+                ? "Se sincronizează…"
+                : "Sincronizează abonații"}
+            </button>
+          </div>
+        )}
       </section>
 
       {(notice || error) && (
-        <p className={error ? "admin-alert admin-alert--error" : "admin-alert admin-alert--success"} role="status">
+        <p
+          className={
+            error
+              ? "admin-alert admin-alert--error"
+              : "admin-alert admin-alert--success"
+          }
+          role="status"
+        >
           {error || notice}
         </p>
       )}
 
       <div className="admin-campaigns__grid">
-        <form className="admin-panel admin-campaign-form" onSubmit={submitCampaign}>
+        <form
+          className="admin-panel admin-campaign-form"
+          onSubmit={submitCampaign}
+        >
           <div className="admin-panel__heading">
-            <div><p>Campanie de Crăciun</p><h2>Scrie și pregătește emailul</h2></div>
+            <div>
+              <p>Campanie de Crăciun</p>
+              <h2>Scrie și pregătește emailul</h2>
+            </div>
           </div>
+
+          <div className="admin-campaign-presets" aria-label="Șabloane de campanie">
+            {christmasPresets.map((preset) => (
+              <button
+                className={
+                  selectedPreset === preset.id ? "is-selected" : undefined
+                }
+                key={preset.id}
+                onClick={() => choosePreset(preset)}
+                type="button"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
           <div className="admin-form-grid">
-            <label className="admin-field admin-field--wide"><span>Nume intern</span><input value={campaign.name} onChange={(event) => setCampaign({ ...campaign, name: event.target.value })} /></label>
-            <label className="admin-field admin-field--wide"><span>Subiect</span><input value={campaign.subject} onChange={(event) => setCampaign({ ...campaign, subject: event.target.value })} /></label>
-            <label className="admin-field admin-field--wide"><span>Preheader</span><input value={campaign.preheader} onChange={(event) => setCampaign({ ...campaign, preheader: event.target.value })} /></label>
-            <label className="admin-field admin-field--wide"><span>Titlu mare</span><input value={campaign.headline} onChange={(event) => setCampaign({ ...campaign, headline: event.target.value })} /></label>
-            <label className="admin-field admin-field--wide"><span>Mesaj</span><textarea value={campaign.body} onChange={(event) => setCampaign({ ...campaign, body: event.target.value })} /></label>
-            <label className="admin-field"><span>Text buton</span><input value={campaign.ctaLabel} onChange={(event) => setCampaign({ ...campaign, ctaLabel: event.target.value })} /></label>
-            <label className="admin-field"><span>Link buton</span><input value={campaign.ctaHref} onChange={(event) => setCampaign({ ...campaign, ctaHref: event.target.value })} /></label>
-            <label className="admin-field"><span>Acțiune</span><select value={action} onChange={(event) => { setAction(event.target.value as CampaignAction); setSendConfirmed(false); }}><option value="draft">Salvează draft</option><option value="schedule">Programează</option><option value="send">Trimite acum</option></select></label>
-            {action === "schedule" && <label className="admin-field"><span>Data și ora</span><input type="datetime-local" value={campaign.scheduledAt} onChange={(event) => setCampaign({ ...campaign, scheduledAt: event.target.value })} /></label>}
-            {action === "send" && <label className="admin-campaign-form__confirm admin-field--wide"><input checked={sendConfirmed} onChange={(event) => setSendConfirmed(event.target.checked)} type="checkbox" /><span>Confirm trimiterea imediată către segmentul activ.</span></label>}
+            <label className="admin-field admin-field--wide">
+              <span>Nume intern</span>
+              <input
+                value={campaign.name}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, name: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field admin-field--wide">
+              <span>Subiect</span>
+              <input
+                value={campaign.subject}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, subject: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field admin-field--wide">
+              <span>Preheader</span>
+              <input
+                value={campaign.preheader}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, preheader: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field admin-field--wide">
+              <span>Titlu mare</span>
+              <input
+                value={campaign.headline}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, headline: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field admin-field--wide">
+              <span>Imagine principală</span>
+              <input
+                value={campaign.heroImage}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, heroImage: event.target.value })
+                }
+                placeholder="/images/themes/theme-craciun.webp"
+              />
+            </label>
+            <label className="admin-field admin-field--wide">
+              <span>Mesaj</span>
+              <textarea
+                value={campaign.body}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, body: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field">
+              <span>Text buton</span>
+              <input
+                value={campaign.ctaLabel}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, ctaLabel: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field">
+              <span>Link buton</span>
+              <input
+                value={campaign.ctaHref}
+                onChange={(event) =>
+                  setCampaign({ ...campaign, ctaHref: event.target.value })
+                }
+              />
+            </label>
+            <label className="admin-field">
+              <span>Acțiune</span>
+              <select
+                value={action}
+                onChange={(event) => {
+                  setAction(event.target.value as CampaignAction);
+                  setSendConfirmed(false);
+                }}
+              >
+                <option value="draft">Validează draft</option>
+                {overview.schedulingSupported && (
+                  <option value="schedule">Programează</option>
+                )}
+                <option value="send">Trimite acum</option>
+              </select>
+            </label>
+            {action === "schedule" && (
+              <label className="admin-field">
+                <span>Data și ora</span>
+                <input
+                  type="datetime-local"
+                  value={campaign.scheduledAt}
+                  onChange={(event) =>
+                    setCampaign({
+                      ...campaign,
+                      scheduledAt: event.target.value,
+                    })
+                  }
+                />
+              </label>
+            )}
+            {action === "send" && (
+              <label className="admin-campaign-form__confirm admin-field--wide">
+                <input
+                  checked={sendConfirmed}
+                  onChange={(event) =>
+                    setSendConfirmed(event.target.checked)
+                  }
+                  type="checkbox"
+                />
+                <span>
+                  Confirm trimiterea imediată către lista activă.
+                </span>
+              </label>
+            )}
           </div>
-          <button className="admin-primary" disabled={busy !== null || !overview.providerConfigured || !overview.segmentConfigured} type="submit">
-            {busy === "campaign" ? "Se procesează…" : action === "send" ? "Trimite campania" : action === "schedule" ? "Programează campania" : "Salvează draftul"}
+          <button
+            className="admin-primary"
+            disabled={
+              busy !== null ||
+              !overview.providerConfigured ||
+              !overview.segmentConfigured
+            }
+            type="submit"
+          >
+            {busy === "campaign"
+              ? "Se procesează…"
+              : action === "send"
+                ? "Trimite campania"
+                : action === "schedule"
+                  ? "Programează campania"
+                  : "Validează draftul"}
           </button>
         </form>
 
         <section className="admin-panel admin-subscriber-list">
-          <div className="admin-panel__heading"><div><p>Listă locală</p><h2>Ultimii abonați</h2></div></div>
-          {subscribers.length ? subscribers.slice(0, 20).map((subscriber) => (
-            <div key={subscriber.email}>
-              <span><strong>{subscriber.firstName || "Fără prenume"}</strong><small>{subscriber.email}</small></span>
-              <em className={`is-${subscriber.syncStatus}`}>{subscriber.syncStatus === "synced" ? "sincronizat" : subscriber.syncStatus === "failed" ? "eroare" : "în așteptare"}</em>
+          <div className="admin-panel__heading">
+            <div>
+              <p>Listă locală</p>
+              <h2>Ultimii abonați</h2>
             </div>
-          )) : <p className="admin-campaigns__empty">Prima înscriere din footer va apărea aici.</p>}
+          </div>
+          {subscribers.length ? (
+            subscribers.slice(0, 20).map((subscriber) => (
+              <div key={subscriber.email}>
+                <span>
+                  <strong>{subscriber.firstName || "Fără prenume"}</strong>
+                  <small>{subscriber.email}</small>
+                </span>
+                <em className={`is-${subscriber.syncStatus}`}>
+                  {subscriber.status === "unsubscribed"
+                    ? "dezabonat"
+                    : subscriber.syncStatus === "synced"
+                      ? localSmtp
+                        ? "activ"
+                        : "sincronizat"
+                      : subscriber.syncStatus === "failed"
+                        ? "eroare"
+                        : "în așteptare"}
+                </em>
+              </div>
+            ))
+          ) : (
+            <p className="admin-campaigns__empty">
+              Prima înscriere din footer va apărea aici.
+            </p>
+          )}
         </section>
       </div>
     </section>
   );
 }
+
