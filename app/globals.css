@@ -2708,18 +2708,35 @@ h4 {
 .story-hero__image {
   position: relative;
   min-height: 700px;
+  overflow: hidden;
+  background: var(--theme-deep);
 }
 
 .story-hero__image::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, var(--ink), transparent 24%);
+  z-index: 1;
+  background:
+    linear-gradient(
+      90deg,
+      var(--ink) 0%,
+      color-mix(in srgb, var(--ink) 58%, transparent) 26%,
+      transparent 68%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-deep) 22%, transparent),
+      color-mix(in srgb, var(--theme-deep) 52%, transparent)
+    );
   content: "";
+  pointer-events: none;
 }
 
 .story-hero__image img {
   object-fit: cover;
-  object-position: 65% center;
+  object-position: center 48%;
+  opacity: 0.82;
+  filter: saturate(0.82) contrast(1.04) brightness(0.9);
 }
 
 .manifesto {
@@ -8176,6 +8193,40 @@ h4 {
 .account-profile-form input:focus,
 .account-address-form input:focus {
   border-color: var(--gold);
+}
+
+.password-input {
+  position: relative;
+  width: 100%;
+}
+
+.password-input input {
+  padding-right: 52px;
+}
+
+.password-input__toggle {
+  position: absolute;
+  top: 50%;
+  right: 1px;
+  display: grid;
+  width: 48px;
+  height: calc(100% - 2px);
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--theme-deep) 72%, transparent);
+  color: var(--cream-muted);
+  cursor: pointer;
+  place-items: center;
+  transform: translateY(-50%);
+}
+
+.password-input__toggle:hover {
+  color: var(--gold-light);
+}
+
+.password-input__toggle:focus-visible {
+  outline: 1px solid var(--gold);
+  outline-offset: -3px;
 }
 
 .account-auth-form label small {

@@ -8,6 +8,7 @@ import {
   setRomanianValidationMessage,
   validateFormInRomanian,
 } from "../lib/form-validation";
+import { PasswordInput } from "./password-input";
 
 type AuthMode = "login" | "register" | "recover";
 
@@ -25,6 +26,12 @@ export function AccountAuthForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState(initialMessage);
+
+  function changeMode(nextMode: AuthMode) {
+    setMode(nextMode);
+    setError("");
+    setMessage("");
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,6 +60,7 @@ export function AccountAuthForm({
             ...(mode === "login" ? { password: form.get("password") } : {}),
           };
 
+    let navigationStarted = false;
     try {
       const response = await fetch(endpoint, {
         method: "POST",
@@ -83,6 +91,7 @@ export function AccountAuthForm({
         setMode("login");
         return;
       }
+      navigationStarted = true;
       router.replace(returnTo);
       router.refresh();
     } catch (submitError) {
@@ -92,7 +101,7 @@ export function AccountAuthForm({
           : "Cererea nu a putut fi finalizată.",
       );
     } finally {
-      setBusy(false);
+      if (!navigationStarted) setBusy(false);
     }
   }
 
@@ -164,7 +173,8 @@ export function AccountAuthForm({
         {mode !== "recover" && (
           <label>
             <span>Parolă</span>
-            <input
+            <PasswordInput
+              key={mode}
               autoComplete={
                 mode === "register" ? "new-password" : "current-password"
               }
@@ -172,7 +182,6 @@ export function AccountAuthForm({
               maxLength={128}
               name="password"
               required
-              type="password"
             />
             {mode === "register" && (
               <small>Minimum 10 caractere.</small>
@@ -203,18 +212,18 @@ export function AccountAuthForm({
       <div className="account-auth-card__switch">
         {mode === "login" ? (
           <>
-            <button type="button" onClick={() => setMode("recover")}>
+            <button type="button" onClick={() => changeMode("recover")}>
               Am uitat parola
             </button>
             <span>
               Nu ai cont?{" "}
-              <button type="button" onClick={() => setMode("register")}>
+              <button type="button" onClick={() => changeMode("register")}>
                 Creează unul
               </button>
             </span>
           </>
         ) : (
-          <button type="button" onClick={() => setMode("login")}>
+          <button type="button" onClick={() => changeMode("login")}>
             ← Înapoi la autentificare
           </button>
         )}

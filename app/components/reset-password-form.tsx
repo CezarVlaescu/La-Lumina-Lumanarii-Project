@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState, useSyncExternalStore } from "react";
+import { PasswordInput } from "./password-input";
 
 export function ResetPasswordForm() {
   const accessToken = useSyncExternalStore(
@@ -79,24 +80,22 @@ export function ResetPasswordForm() {
       <form className="account-auth-form" onSubmit={submit}>
         <label>
           <span>Parolă nouă</span>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             minLength={10}
             maxLength={128}
             name="password"
             required
-            type="password"
           />
         </label>
         <label>
           <span>Confirmă parola</span>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             minLength={10}
             maxLength={128}
             name="confirmation"
             required
-            type="password"
           />
         </label>
         {!accessToken && (

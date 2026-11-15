@@ -178,10 +178,14 @@ async function viewerFromSupabaseResult(result: SupabaseAuthResult) {
     displayName,
     role: await resolveAccountRole(email),
   };
-  await ensureAccountProfile(viewer, {
-    firstName: result.user?.user_metadata?.first_name,
-    lastName: result.user?.user_metadata?.last_name,
-  });
+  try {
+    await ensureAccountProfile(viewer, {
+      firstName: result.user?.user_metadata?.first_name,
+      lastName: result.user?.user_metadata?.last_name,
+    });
+  } catch (error) {
+    console.error("Account profile synchronization failed.", error);
+  }
   return viewer;
 }
 

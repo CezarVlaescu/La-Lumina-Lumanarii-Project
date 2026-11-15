@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { PasswordInput } from "./password-input";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -47,12 +48,11 @@ export function AdminLoginForm() {
       </label>
       <label>
         <span>Parolă</span>
-        <input
+        <PasswordInput
           autoComplete="current-password"
           minLength={8}
           name="password"
           required
-          type="password"
         />
       </label>
       {error && <p className="admin-alert admin-alert--error">{error}</p>}

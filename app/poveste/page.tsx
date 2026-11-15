@@ -21,7 +21,14 @@ export default function StoryPage() {
           <p>Lucrăm în loturi mici, iar fiecare piesă trece prin turnare, finisare și verificare înainte de ambalare. Colecțiile urmăresc anotimpurile și sărbătorile din an.</p>
         </div>
         <div className="story-hero__image">
-          <Image src="/images/hero-ritual-nocturn.webp" alt="Lumânare aprinsă într-un decor de atelier" fill unoptimized priority />
+          <Image
+            src="/images/story-atelier-turnare.jpeg"
+            alt="Lumânări colorate în curs de turnare, cu fitilurile fixate manual"
+            fill
+            sizes="(max-width: 980px) 100vw, 55vw"
+            unoptimized
+            priority
+          />
         </div>
       </section>
       <section className="manifesto">
