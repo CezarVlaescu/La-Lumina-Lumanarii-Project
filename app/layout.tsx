@@ -16,6 +16,7 @@ import {
   resolveActiveHero,
 } from "./lib/hero-settings";
 import "./globals.css";
+import { getCandleCustomizerSettings } from "./lib/customizer-repository";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -89,12 +90,14 @@ export default async function RootLayout({
     storeProfile,
     accountViewer,
     heroSettings,
+    customizerSettings,
   ] = await Promise.all([
     getStoreProducts(),
     getShippingSettings(),
     getStoreProfile(),
     getAccountViewer(),
     getHeroSettings(),
+    getCandleCustomizerSettings(),
   ]);
   const activeTheme = resolveActiveHero(heroSettings);
   const themeStyle = {
@@ -149,6 +152,7 @@ export default async function RootLayout({
           effect={activeTheme.effect}
           effectIntensity={activeTheme.effectIntensity}
           themeId={activeTheme.id}
+          customizerSettings={customizerSettings}
         >
           {children}
         </SiteShell>

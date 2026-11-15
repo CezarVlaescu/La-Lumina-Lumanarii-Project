@@ -196,6 +196,7 @@ export const storeOrderItems = sqliteTable(
     productImage: text("product_image").notNull().default(""),
     variantId: text("variant_id"),
     variantName: text("variant_name"),
+    customizationJson: text("customization_json"),
     unitPriceCents: integer("unit_price_cents").notNull(),
     quantity: integer("quantity").notNull(),
     lineTotalCents: integer("line_total_cents").notNull(),

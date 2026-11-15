@@ -179,6 +179,7 @@ test("renders the public storefront routes", async () => {
     "/lumanari",
     "/lumanari/bradut-alb-perlat",
     "/colectii",
+    "/creeaza-ti-lumanarea",
     "/poveste",
     "/ghid-parfum",
     "/ingrijire",
@@ -252,12 +253,18 @@ test("keeps incomplete products and the inactive guide out of the sitemap", asyn
   assert.equal(response.status, 200);
   const xml = await response.text();
   assert.match(xml, /\/lumanari\/bradut-alb-perlat/);
+  assert.match(xml, /\/creeaza-ti-lumanarea/);
   assert.doesNotMatch(xml, /turturele-de-paste/);
   assert.doesNotMatch(xml, /ghid-parfum/);
 });
 
 test("sets canonical metadata on primary content pages", async () => {
-  for (const path of ["/colectii", "/poveste", "/ingrijire"]) {
+  for (const path of [
+    "/colectii",
+    "/creeaza-ti-lumanarea",
+    "/poveste",
+    "/ingrijire",
+  ]) {
     const response = await request(path);
     assert.equal(response.status, 200);
     const html = await response.text();
@@ -267,6 +274,58 @@ test("sets canonical metadata on primary content pages", async () => {
       `${path} should expose its own canonical URL`,
     );
   }
+});
+
+test("connects candle customization from storefront through order storage", async () => {
+  const [
+    page,
+    storeProvider,
+    checkout,
+    orders,
+    migration,
+  ] = await Promise.all([
+    readFile(
+      new URL("../app/components/candle-customizer.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/components/store-provider.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/lib/checkout-input.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/lib/order-repository.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "../supabase/migrations/202611150001_candle_customizer.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(page, /addConfiguredProduct/);
+  assert.match(page, /Culoarea principală/);
+  assert.match(page, /Alege aroma/);
+  assert.match(storeProvider, /candleCustomizationKey/);
+  assert.match(checkout, /variantă standard și personalizare/);
+  assert.match(orders, /trackInventory:\s*false/);
+  assert.match(orders, /customization_json/);
+  assert.match(migration, /add column if not exists customization_json jsonb/);
+  assert.match(migration, /track_inventory/);
+  assert.match(migration, /and customization_json is null/);
+});
+
+test("renders the candle creator with visible options", async () => {
+  const response = await request("/creeaza-ti-lumanarea");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Creează-ți lumânarea/);
+  assert.match(html, /Culoarea principală/);
+  assert.match(html, /Alege aroma/);
+  assert.match(html, /Adaugă creația în coș/);
 });
 
 test("does not expose implementation notes in public account and contact pages", async () => {

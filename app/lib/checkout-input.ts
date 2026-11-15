@@ -4,6 +4,7 @@ import type {
   PaymentMethod,
   ShippingMethod,
 } from "./order-types";
+import type { CandleCustomization } from "./candle-customizer";
 
 function requiredText(value: unknown, label: string, maxLength: number) {
   if (typeof value !== "string" || !value.trim()) {
@@ -56,7 +57,39 @@ function parseLines(value: unknown): OrderLineInput[] {
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
       throw new Error(`Cantitatea produsului ${index + 1} nu este validă.`);
     }
-    return { productSlug, variantId, quantity };
+    let customization: CandleCustomization | undefined;
+    if (candidate.customization !== undefined) {
+      if (!candidate.customization || typeof candidate.customization !== "object") {
+        throw new Error(`Personalizarea produsului ${index + 1} nu este validă.`);
+      }
+      const raw = candidate.customization as Record<string, unknown>;
+      const customizationId = (entry: unknown, label: string) => {
+        if (typeof entry !== "string" || !/^[a-z0-9-]{1,80}$/.test(entry)) {
+          throw new Error(`${label} produsului ${index + 1} nu este validă.`);
+        }
+        return entry;
+      };
+      if (!Array.isArray(raw.accentColorIds) || raw.accentColorIds.length > 5) {
+        throw new Error(`Culorile suplimentare ale produsului ${index + 1} nu sunt valide.`);
+      }
+      customization = {
+        primaryColorId: customizationId(raw.primaryColorId, "Culoarea principală"),
+        secondaryColorId:
+          raw.secondaryColorId === undefined || raw.secondaryColorId === ""
+            ? undefined
+            : customizationId(raw.secondaryColorId, "Culoarea secundară"),
+        accentColorIds: raw.accentColorIds.map((entry) =>
+          customizationId(entry, "O culoare suplimentară"),
+        ),
+        scentId: customizationId(raw.scentId, "Aroma"),
+      };
+    }
+    if (customization && variantId) {
+      throw new Error(
+        `Produsul ${index + 1} nu poate avea simultan variantă standard și personalizare.`,
+      );
+    }
+    return { productSlug, variantId, quantity, customization };
   });
 }
 

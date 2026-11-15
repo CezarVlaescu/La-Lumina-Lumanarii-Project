@@ -6,11 +6,23 @@ import {
   getProductStock,
   type Product,
 } from "../lib/catalog";
+import {
+  candleCustomizationKey,
+  getCustomizerPrice,
+  getCustomizerProductSettings,
+  resolveCandleCustomization,
+  type CandleCustomization,
+  type CandleCustomizationDetails,
+  type CandleCustomizerSettings,
+} from "../lib/candle-customizer";
 
 export type CartLine = {
   product: Product;
   variantId?: string;
   quantity: number;
+  customization?: CandleCustomization;
+  customizationDetails?: CandleCustomizationDetails;
+  unitPrice: number;
 };
 
 type StoreContextValue = {
@@ -27,6 +39,11 @@ type StoreContextValue = {
     variantId?: string,
     requestedQuantity?: number,
   ) => void;
+  addConfiguredProduct: (
+    product: Product,
+    customization: CandleCustomization,
+    requestedQuantity?: number,
+  ) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
 };
@@ -38,13 +55,31 @@ type StoredCartLine = {
   product?: Product;
   variantId?: string;
   quantity: number;
+  customization?: CandleCustomization;
 };
 
-export function getCartLineId(productSlug: string, variantId?: string) {
-  return `${productSlug}::${variantId ?? "default"}`;
+export function getCartLineId(
+  productSlug: string,
+  variantId?: string,
+  customization?: CandleCustomization,
+) {
+  return `${productSlug}::${variantId ?? "default"}::${candleCustomizationKey(
+    customization,
+  )}`;
 }
 
-function readStoredCart(products: Product[]): CartLine[] {
+export function getCartLineUnitPrice(line: CartLine) {
+  return line.unitPrice;
+}
+
+export function getCartLineStock(line: CartLine) {
+  return line.customization ? 99 : getProductStock(line.product, line.variantId);
+}
+
+function readStoredCart(
+  products: Product[],
+  customizerSettings: CandleCustomizerSettings,
+): CartLine[] {
   const saved = window.localStorage.getItem("lll-cart");
   if (!saved) return [];
 
@@ -65,6 +100,35 @@ function readStoredCart(products: Product[]): CartLine[] {
           : "";
     const product = products.find((entry) => entry.slug === slug);
     const quantity = Number(candidate.quantity);
+    const customization =
+      candidate.customization && typeof candidate.customization === "object"
+        ? (candidate.customization as CandleCustomization)
+        : undefined;
+    if (product && customization) {
+      const config = getCustomizerProductSettings(customizerSettings, product.slug);
+      const customizationDetails = resolveCandleCustomization(
+        customizerSettings,
+        product.slug,
+        customization,
+      );
+      const customPrice = getCustomizerPrice(customizerSettings, product);
+      if (
+        !customizerSettings.enabled ||
+        !config.enabled ||
+        !customizationDetails ||
+        customPrice === null ||
+        customPrice <= 0 ||
+        !Number.isInteger(quantity) ||
+        quantity < 1
+      ) return [];
+      return [{
+        product,
+        quantity: Math.min(quantity, 99),
+        customization,
+        customizationDetails,
+        unitPrice: customPrice,
+      }];
+    }
     const requestedVariantId =
       typeof candidate.variantId === "string" ? candidate.variantId : undefined;
     const validRequestedVariantId =
@@ -84,16 +148,23 @@ function readStoredCart(products: Product[]): CartLine[] {
     const price = getProductPrice(product, variantId);
     const stock = getProductStock(product, variantId);
     if (price === null || stock < 1) return [];
-    return [{ product, variantId, quantity: Math.min(quantity, stock, 99) }];
+    return [{
+      product,
+      variantId,
+      quantity: Math.min(quantity, stock, 99),
+      unitPrice: price,
+    }];
   });
 }
 
 export function StoreProvider({
   children,
   products,
+  customizerSettings,
 }: {
   children: React.ReactNode;
   products: Product[];
+  customizerSettings: CandleCustomizerSettings;
 }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -103,7 +174,7 @@ export function StoreProvider({
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       try {
-        setLines(readStoredCart(products));
+        setLines(readStoredCart(products, customizerSettings));
       } catch {
         // A blocked or invalid storage area should never block shopping.
       } finally {
@@ -112,14 +183,15 @@ export function StoreProvider({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [products]);
+  }, [customizerSettings, products]);
 
   useEffect(() => {
     if (!hydrated) return;
-    const storedLines: StoredCartLine[] = lines.map(({ product, variantId, quantity }) => ({
+    const storedLines: StoredCartLine[] = lines.map(({ product, variantId, quantity, customization }) => ({
       slug: product.slug,
       variantId,
       quantity,
+      customization,
     }));
     try {
       window.localStorage.setItem("lll-cart", JSON.stringify(storedLines));
@@ -132,7 +204,7 @@ export function StoreProvider({
     function syncCart(event: StorageEvent) {
       if (event.key !== "lll-cart") return;
       try {
-        setLines(readStoredCart(products));
+        setLines(readStoredCart(products, customizerSettings));
       } catch {
         // An invalid cart in another tab must not interrupt this one.
       }
@@ -140,7 +212,7 @@ export function StoreProvider({
 
     window.addEventListener("storage", syncCart);
     return () => window.removeEventListener("storage", syncCart);
-  }, [products]);
+  }, [customizerSettings, products]);
 
   useEffect(() => {
     if (!cartNotice) return;
@@ -158,7 +230,7 @@ export function StoreProvider({
       subtotal: lines.reduce(
         (sum, line) =>
           sum +
-          (getProductPrice(line.product, line.variantId) ?? 0) * line.quantity,
+          line.unitPrice * line.quantity,
         0,
       ),
       setCartOpen,
@@ -178,7 +250,7 @@ export function StoreProvider({
         const existingQuantity =
           lines.find(
             (line) =>
-              getCartLineId(line.product.slug, line.variantId) === lineId,
+              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
           )?.quantity ?? 0;
         const safeRequestedQuantity = Math.max(
           1,
@@ -201,16 +273,21 @@ export function StoreProvider({
 
         setLines((current) => {
           const existing = current.find(
-            (line) => getCartLineId(line.product.slug, line.variantId) === lineId,
+            (line) => getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
           );
           if (existing) {
             return current.map((line) =>
-              getCartLineId(line.product.slug, line.variantId) === lineId
+              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId
                 ? { ...line, quantity: nextQuantity }
                 : line,
             );
           }
-          return [...current, { product, variantId, quantity: nextQuantity }];
+          return [...current, {
+            product,
+            variantId,
+            quantity: nextQuantity,
+            unitPrice: getProductPrice(product, variantId) ?? 0,
+          }];
         });
         setCartNotice(
           addedQuantity === 1
@@ -219,27 +296,92 @@ export function StoreProvider({
         );
         setCartOpen(true);
       },
+      addConfiguredProduct: (product, customization, requestedQuantity = 1) => {
+        const config = getCustomizerProductSettings(customizerSettings, product.slug);
+        const details = resolveCandleCustomization(
+          customizerSettings,
+          product.slug,
+          customization,
+        );
+        const unitPrice = getCustomizerPrice(customizerSettings, product);
+        if (
+          !customizerSettings.enabled ||
+          !config.enabled ||
+          !details ||
+          unitPrice === null ||
+          unitPrice <= 0
+        ) {
+          setCartNotice(
+            "Configurația aleasă nu mai este disponibilă. Reîncarcă pagina și încearcă din nou.",
+          );
+          return;
+        }
+        const lineId = getCartLineId(product.slug, undefined, customization);
+        const existingQuantity =
+          lines.find(
+            (line) =>
+              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+          )?.quantity ?? 0;
+        const safeRequestedQuantity = Math.max(
+          1,
+          Math.min(Math.floor(requestedQuantity), 99),
+        );
+        const nextQuantity = Math.min(existingQuantity + safeRequestedQuantity, 99);
+        const addedQuantity = nextQuantity - existingQuantity;
+        if (addedQuantity < 1) {
+          setCartNotice("Ai atins cantitatea maximă pentru această creație.");
+          setCartOpen(true);
+          return;
+        }
+        setLines((current) => {
+          const existing = current.find(
+            (line) =>
+              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+          );
+          if (existing) {
+            return current.map((line) =>
+              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId
+                ? { ...line, quantity: nextQuantity }
+                : line,
+            );
+          }
+          return [...current, {
+            product,
+            quantity: nextQuantity,
+            customization,
+            customizationDetails: details,
+            unitPrice,
+          }];
+        });
+        setCartNotice(
+          addedQuantity === 1
+            ? "Lumânarea personalizată a fost adăugată în coș."
+            : `${addedQuantity} lumânări personalizate au fost adăugate în coș.`,
+        );
+        setCartOpen(true);
+      },
       updateQuantity: (lineId, quantity) => {
         const target = lines.find(
-          (line) => getCartLineId(line.product.slug, line.variantId) === lineId,
+          (line) =>
+            getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
         );
         if (!target) return;
         if (quantity <= 0) {
           setLines((current) =>
             current.filter(
               (line) =>
-                getCartLineId(line.product.slug, line.variantId) !== lineId,
+                getCartLineId(line.product.slug, line.variantId, line.customization) !== lineId,
             ),
           );
           setCartNotice(`Produsul ${target.product.name} a fost eliminat din coș.`);
           return;
         }
 
-        const stock = getProductStock(target.product, target.variantId);
+        const stock = getCartLineStock(target);
         const nextQuantity = Math.min(Math.max(1, quantity), stock, 99);
         setLines((current) =>
           current.map((line) =>
-            getCartLineId(line.product.slug, line.variantId) === lineId
+            getCartLineId(line.product.slug, line.variantId, line.customization) === lineId
               ? { ...line, quantity: nextQuantity }
               : line,
           ),
@@ -255,7 +397,7 @@ export function StoreProvider({
         setCartNotice("");
       },
     }),
-    [cartNotice, cartOpen, hydrated, lines],
+    [cartNotice, cartOpen, customizerSettings, hydrated, lines],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

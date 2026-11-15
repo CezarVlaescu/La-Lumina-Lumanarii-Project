@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   formatPrice,
   formatWeight,
-  getProductPrice,
   getProductVariant,
 } from "../lib/catalog";
 import {
@@ -16,7 +15,7 @@ import {
   type ShippingMethod,
   type ShippingSettings,
 } from "../lib/shipping";
-import { getCartLineId, useStore } from "./store-provider";
+import { getCartLineId, getCartLineUnitPrice, useStore } from "./store-provider";
 import type { AccountCheckoutDefaults } from "../lib/account-types";
 import {
   clearValidationMessage,
@@ -114,10 +113,11 @@ export function CheckoutForm({
           country: "România",
           note: form.get("note"),
           acceptsTerms: form.get("acceptsTerms") === "yes",
-          lines: lines.map(({ product, variantId, quantity }) => ({
+          lines: lines.map(({ product, variantId, quantity, customization }) => ({
             productSlug: product.slug,
             variantId,
             quantity,
+            customization,
           })),
         }),
       });
@@ -491,13 +491,23 @@ export function CheckoutForm({
           <Link href="/cos">Modifică coșul</Link>
         </div>
         <div className="checkout-products">
-          {lines.map(({ product, variantId, quantity }) => {
+          {lines.map((line) => {
+            const { product, variantId, quantity, customization, customizationDetails } = line;
             const variant = getProductVariant(product, variantId);
             return (
-            <div className="checkout-product" key={getCartLineId(product.slug, variantId)}>
+            <div className="checkout-product" key={getCartLineId(product.slug, variantId, customization)}>
               <div><Image src={variant?.image ?? product.image} alt="" fill unoptimized /><span>{quantity}</span></div>
-              <p><strong>{product.name}</strong><small>{variant ? `Culoare: ${variant.name}` : formatWeight(product.weight)}</small></p>
-              <b>{formatPrice((getProductPrice(product, variantId) ?? 0) * quantity)}</b>
+              <p>
+                <strong>{product.name}</strong>
+                <small>
+                  {customizationDetails
+                    ? `${customizationDetails.primaryColor.name}${customizationDetails.secondaryColor ? ` + ${customizationDetails.secondaryColor.name}` : ""} · ${customizationDetails.scent.name}`
+                    : variant
+                      ? `Culoare: ${variant.name}`
+                      : formatWeight(product.weight)}
+                </small>
+              </p>
+              <b>{formatPrice(getCartLineUnitPrice(line) * quantity)}</b>
             </div>
             );
           })}

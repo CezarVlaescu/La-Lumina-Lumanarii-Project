@@ -443,6 +443,45 @@ export function AdminOrders({ orders, onChange }: AdminOrdersProps) {
                           : ""}
                         {item.quantity} × {formatPrice(item.unitPrice)}
                       </small>
+                      {item.customization && (
+                        <span className="admin-order-customization">
+                          <small>
+                            Principală
+                            <i
+                              style={{
+                                backgroundColor:
+                                  item.customization.primaryColor.hex,
+                              }}
+                            />
+                            {item.customization.primaryColor.name}
+                          </small>
+                          <small>
+                            Secundară: {item.customization.secondaryColor ? (
+                              <>
+                                <i
+                                  style={{
+                                    backgroundColor:
+                                      item.customization.secondaryColor.hex,
+                                  }}
+                                />
+                                {item.customization.secondaryColor.name}
+                              </>
+                            ) : "fără"}
+                          </small>
+                          {item.customization.accentColors.length > 0 && (
+                            <small>
+                              Accente: {item.customization.accentColors.map((color) => (
+                                <i
+                                  key={color.id}
+                                  title={color.name}
+                                  style={{ backgroundColor: color.hex }}
+                                />
+                              ))}
+                            </small>
+                          )}
+                          <small>Aromă: {item.customization.scent.name}</small>
+                        </span>
+                      )}
                     </p>
                     <b>{formatPrice(item.lineTotal)}</b>
                   </article>

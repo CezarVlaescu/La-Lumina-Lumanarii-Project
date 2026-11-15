@@ -13,6 +13,7 @@ import { accountSignOutPath } from "../lib/account-auth";
 import { getHomepageSettings } from "../lib/homepage-settings";
 import { getNewsletterSubscribers } from "../lib/newsletter-repository";
 import { getMarketingOverview } from "../lib/marketing-email-service";
+import { getCandleCustomizerSettings } from "../lib/customizer-repository";
 
 export const metadata: Metadata = {
   title: "Administrare",
@@ -32,6 +33,7 @@ export default async function AdminPage() {
     initialHeroSettings,
     initialHomepageSettings,
     initialNewsletterSubscribers,
+    initialCustomizerSettings,
   ] = await Promise.all([
     getAdminProducts(),
     getAdminOrders(),
@@ -41,6 +43,7 @@ export default async function AdminPage() {
     getHeroSettings(),
     getHomepageSettings(),
     getNewsletterSubscribers(),
+    getCandleCustomizerSettings(),
   ]);
   const initialMarketingOverview = await getMarketingOverview(
     initialNewsletterSubscribers,
@@ -63,6 +66,7 @@ export default async function AdminPage() {
       initialHomepageSettings={initialHomepageSettings}
       initialMarketingOverview={initialMarketingOverview}
       initialNewsletterSubscribers={initialNewsletterSubscribers.slice(0, 100)}
+      initialCustomizerSettings={initialCustomizerSettings}
       initialLaunchReadiness={initialLaunchReadiness}
       userName={user.fullName ?? user.displayName}
       signOutHref={accountSignOutPath("/")}

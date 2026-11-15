@@ -5,15 +5,18 @@ import Link from "next/link";
 import {
   formatPrice,
   formatWeight,
-  getProductPrice,
-  getProductStock,
   getProductVariant,
 } from "../lib/catalog";
 import {
   shippingCost,
   type ShippingSettings,
 } from "../lib/shipping";
-import { getCartLineId, useStore } from "./store-provider";
+import {
+  getCartLineId,
+  getCartLineStock,
+  getCartLineUnitPrice,
+  useStore,
+} from "./store-provider";
 
 export function CartPageContent({
   shippingSettings,
@@ -75,10 +78,11 @@ export function CartPageContent({
             </button>
           </div>
         )}
-        {lines.map(({ product, variantId, quantity }) => {
+        {lines.map((line) => {
+          const { product, variantId, quantity, customization, customizationDetails } = line;
           const variant = getProductVariant(product, variantId);
-          const lineId = getCartLineId(product.slug, variantId);
-          const stock = getProductStock(product, variantId);
+          const lineId = getCartLineId(product.slug, variantId, customization);
+          const stock = getCartLineStock(line);
           return (
           <article className="cart-page-line" key={lineId}>
             <Link href={`/lumanari/${product.slug}`} className="cart-page-line__image">
@@ -87,7 +91,38 @@ export function CartPageContent({
             <div>
               <p>{product.collection}</p>
               <Link href={`/lumanari/${product.slug}`}><h2>{product.name}</h2></Link>
-              <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${formatWeight(product.weight)}` : ""}</span>
+              <span>
+                {customizationDetails
+                  ? "Creație personalizată"
+                  : variant
+                    ? `Culoare: ${variant.name}`
+                    : product.subtitle}
+                {product.weight ? ` · ${formatWeight(product.weight)}` : ""}
+              </span>
+              {customizationDetails && (
+                <ul className="cart-customization cart-customization--page">
+                  <li>
+                    Principală:{" "}
+                    <i style={{ backgroundColor: customizationDetails.primaryColor.hex }} />
+                    {customizationDetails.primaryColor.name}
+                  </li>
+                  <li>
+                    Secundară:{" "}
+                    {customizationDetails.secondaryColor ? (
+                      <><i style={{ backgroundColor: customizationDetails.secondaryColor.hex }} />{customizationDetails.secondaryColor.name}</>
+                    ) : "fără"}
+                  </li>
+                  {customizationDetails.accentColors.length > 0 && (
+                    <li>
+                      Accente:{" "}
+                      {customizationDetails.accentColors.map((color) => (
+                        <i key={color.id} title={color.name} style={{ backgroundColor: color.hex }} />
+                      ))}
+                    </li>
+                  )}
+                  <li>Aromă: {customizationDetails.scent.name}</li>
+                </ul>
+              )}
               <small className={stock <= 3 ? "cart-stock cart-stock--low" : "cart-stock"}>
                 {stock <= 3
                   ? `${stock} ${stock === 1 ? "bucată disponibilă" : "bucăți disponibile"}`
@@ -113,7 +148,7 @@ export function CartPageContent({
                 Elimină din coș
               </button>
             </div>
-            <strong>{formatPrice((getProductPrice(product, variantId) ?? 0) * quantity)}</strong>
+            <strong>{formatPrice(getCartLineUnitPrice(line) * quantity)}</strong>
           </article>
           );
         })}

@@ -43,7 +43,11 @@ function checkoutUrl(path: string, origin: string) {
 }
 
 function lineItemName(item: AdminOrder["items"][number]) {
-  const suffix = item.variantName ? ` · ${item.variantName}` : "";
+  const suffix = item.customization
+    ? ` · Personalizată · ${item.customization.scent.name}`
+    : item.variantName
+      ? ` · ${item.variantName}`
+      : "";
   return `${item.productName}${suffix}`.slice(0, 120);
 }
 

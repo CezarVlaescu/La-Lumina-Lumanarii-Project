@@ -1,0 +1,1 @@
+ALTER TABLE `store_order_items` ADD `customization_json` text;

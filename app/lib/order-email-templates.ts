@@ -8,6 +8,7 @@ import {
 import { emailLayout, escapeHtml } from "./email-template";
 import { shippingMethodLabels } from "./shipping";
 import { absoluteSiteUrl } from "./site-config";
+import { customizationSummary } from "./candle-customizer";
 
 export type OrderEmailMessage = {
   subject: string;
@@ -30,6 +31,15 @@ function itemRows(order: AdminOrder) {
           <td style="padding:12px 0;border-bottom:1px solid #302432;color:#e5dcd2;font-size:14px;line-height:1.5">
             ${escapeHtml(item.quantity)} × ${escapeHtml(item.productName)}
             ${item.variantName ? `<div style="color:#8f8288;font-size:12px">Culoare: ${escapeHtml(item.variantName)}</div>` : ""}
+            ${
+              item.customization
+                ? `<div style="margin-top:5px;color:#a99ca2;font-size:12px;line-height:1.55">${customizationSummary(
+                    item.customization,
+                  )
+                    .map((line) => escapeHtml(line))
+                    .join("<br>")}</div>`
+                : ""
+            }
           </td>
           <td align="right" style="padding:12px 0;border-bottom:1px solid #302432;color:#d9b574;font-size:14px;white-space:nowrap">
             ${escapeHtml(money(item.lineTotal))}
@@ -80,7 +90,7 @@ function customerConfirmation(order: AdminOrder): OrderEmailMessage {
   const textItems = order.items
     .map(
       (item) =>
-        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}`,
+        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}${item.customization ? `\n  ${customizationSummary(item.customization).join(" · ")}` : ""}`,
     )
     .join("\n");
 
@@ -131,6 +141,12 @@ function adminNewOrder(order: AdminOrder): OrderEmailMessage {
       ${escapeHtml(order.postalCode)} ${escapeHtml(order.city)}, ${escapeHtml(order.county)}
       ${order.customerNote ? `<br><br><strong style="color:#d8cdc3">Observații:</strong><br>${escapeHtml(order.customerNote)}` : ""}
     </div>`;
+  const textItems = order.items
+    .map(
+      (item) =>
+        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}${item.customization ? `\n  ${customizationSummary(item.customization).join(" · ")}` : ""}`,
+    )
+    .join("\n");
 
   return {
     subject,
@@ -154,7 +170,7 @@ function adminNewOrder(order: AdminOrder): OrderEmailMessage {
         },
       ],
     }),
-    text: `${intro}\n\n${order.orderNumber}\nClient: ${order.customerFirstName} ${order.customerLastName}\nEmail: ${order.customerEmail}\nTelefon: ${order.customerPhone}\nTotal: ${money(order.total)}\nLivrare: ${shippingMethodLabels[order.shippingMethod]} — ${order.shippingPointName ?? order.addressLine}, ${order.postalCode} ${order.city}, ${order.county}\n\nAdministrare: ${absoluteSiteUrl("/admin")}`,
+    text: `${intro}\n\n${order.orderNumber}\nClient: ${order.customerFirstName} ${order.customerLastName}\nEmail: ${order.customerEmail}\nTelefon: ${order.customerPhone}\n\n${textItems}\n\nTotal: ${money(order.total)}\nLivrare: ${shippingMethodLabels[order.shippingMethod]} — ${order.shippingPointName ?? order.addressLine}, ${order.postalCode} ${order.city}, ${order.county}\n\nAdministrare: ${absoluteSiteUrl("/admin")}`,
   };
 }
 

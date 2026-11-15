@@ -15,6 +15,15 @@ import {
   applyWeeklyOfferToProduct,
   getHomepageSettings,
 } from "./homepage-settings";
+import {
+  candleCustomizationKey,
+  getCustomizerPrice,
+  getCustomizerProductSettings,
+  resolveCandleCustomization,
+  type CandleCustomization,
+  type CandleCustomizationDetails,
+} from "./candle-customizer";
+import { getCandleCustomizerSettings } from "./customizer-repository";
 import type {
   AdminOrder,
   AdminOrderItem,
@@ -51,6 +60,8 @@ type AuthoritativeLine = {
   unitPriceCents: number;
   quantity: number;
   currentStock: number;
+  trackInventory: boolean;
+  customization?: CandleCustomizationDetails;
 };
 
 function inventorySku(productSlug: string, variantId?: string) {
@@ -110,6 +121,7 @@ function supabaseOrderToRow(row: SupabaseRow): OrderRow {
 }
 
 function supabaseItemToRow(row: SupabaseRow): OrderItemRow {
+  const rawCustomization = row.customization_json;
   return {
     id: String(row.id),
     orderId: String(row.order_id),
@@ -118,10 +130,32 @@ function supabaseItemToRow(row: SupabaseRow): OrderItemRow {
     productImage: String(row.product_image ?? ""),
     variantId: nullableText(row.variant_id),
     variantName: nullableText(row.variant_name),
+    customizationJson:
+      rawCustomization && typeof rawCustomization === "object"
+        ? JSON.stringify(rawCustomization)
+        : nullableText(rawCustomization),
     unitPriceCents: Number(row.unit_price_cents),
     quantity: Number(row.quantity),
     lineTotalCents: Number(row.line_total_cents),
   };
+}
+
+function parseCustomizationDetails(value: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as CandleCustomizationDetails;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      !parsed.primaryColor ||
+      !parsed.scent
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 function supabaseEmailToRow(row: SupabaseRow): EmailDeliveryRow {
@@ -151,6 +185,7 @@ function rowItemToAdmin(item: OrderItemRow): AdminOrderItem {
     productImage: item.productImage,
     variantId: item.variantId,
     variantName: item.variantName,
+    customization: parseCustomizationDetails(item.customizationJson),
     unitPrice: money(item.unitPriceCents),
     quantity: item.quantity,
     lineTotal: money(item.lineTotalCents),
@@ -252,25 +287,34 @@ export async function getOrderByCheckoutAttempt(checkoutAttemptId: string) {
 }
 
 async function authoritativeLines(input: CheckoutInput) {
-  const [adminProducts, homepageSettings] = await Promise.all([
+  const [adminProducts, homepageSettings, customizerSettings] = await Promise.all([
     getAdminProducts(),
     getHomepageSettings(),
+    getCandleCustomizerSettings(),
   ]);
   const products = adminProducts.map((product) =>
     applyWeeklyOfferToProduct(product, homepageSettings.weeklyOffer),
   );
   const grouped = new Map<
     string,
-    { productSlug: string; variantId?: string; quantity: number }
+    {
+      productSlug: string;
+      variantId?: string;
+      quantity: number;
+      customization?: CandleCustomization;
+    }
   >();
 
   for (const line of input.lines) {
-    const key = inventorySku(line.productSlug, line.variantId);
+    const key = `${inventorySku(line.productSlug, line.variantId)}::${candleCustomizationKey(
+      line.customization,
+    )}`;
     const existing = grouped.get(key);
     grouped.set(key, {
       productSlug: line.productSlug,
       variantId: line.variantId,
       quantity: (existing?.quantity ?? 0) + line.quantity,
+      customization: line.customization,
     });
   }
 
@@ -286,6 +330,42 @@ async function authoritativeLines(input: CheckoutInput) {
     );
     if (!product || !product.managed) {
       throw new Error("Un produs din coș nu mai este disponibil.");
+    }
+
+    if (requested.customization) {
+      const productSettings = getCustomizerProductSettings(
+        customizerSettings,
+        product.slug,
+      );
+      const customization = resolveCandleCustomization(
+        customizerSettings,
+        product.slug,
+        requested.customization,
+      );
+      const price = getCustomizerPrice(customizerSettings, product);
+      if (
+        !customizerSettings.enabled ||
+        !productSettings.enabled ||
+        !customization ||
+        price === null ||
+        price <= 0
+      ) {
+        throw new Error(
+          `Configurația personalizată pentru ${product.name} nu mai este disponibilă.`,
+        );
+      }
+      lines.push({
+        sku: inventorySku(product.slug),
+        productSlug: product.slug,
+        productName: product.name,
+        productImage: product.image,
+        unitPriceCents: Math.round(price * 100),
+        quantity: requested.quantity,
+        currentStock: 99,
+        trackInventory: false,
+        customization,
+      });
+      continue;
     }
 
     const variant = requested.variantId
@@ -324,6 +404,7 @@ async function authoritativeLines(input: CheckoutInput) {
       unitPriceCents: Math.round(price * 100),
       quantity: requested.quantity,
       currentStock,
+      trackInventory: true,
     });
   }
 
@@ -418,6 +499,8 @@ export async function createOrder(input: CheckoutInput) {
             quantity: line.quantity,
             line_total_cents: line.unitPriceCents * line.quantity,
             current_stock: line.currentStock,
+            track_inventory: line.trackInventory,
+            customization: line.customization ?? null,
           })),
           history: {
             id: crypto.randomUUID(),
@@ -463,6 +546,7 @@ export async function createOrder(input: CheckoutInput) {
 
   const statements: D1PreparedStatement[] = [];
   for (const line of lines) {
+    if (!line.trackInventory) continue;
     statements.push(
       database
         .prepare(
@@ -565,8 +649,9 @@ export async function createOrder(input: CheckoutInput) {
         .prepare(
           `INSERT INTO store_order_items (
             id, order_id, product_slug, product_name, product_image,
-            variant_id, variant_name, unit_price_cents, quantity, line_total_cents
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            variant_id, variant_name, customization_json,
+            unit_price_cents, quantity, line_total_cents
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           crypto.randomUUID(),
@@ -576,6 +661,7 @@ export async function createOrder(input: CheckoutInput) {
           line.productImage,
           line.variantId ?? null,
           line.variantName ?? null,
+          line.customization ? JSON.stringify(line.customization) : null,
           line.unitPriceCents,
           line.quantity,
           line.unitPriceCents * line.quantity,
@@ -1014,6 +1100,7 @@ export async function updateOrderStatus(
   if (status === "cancelled") {
     const products = await getAdminProducts();
     for (const item of current.items) {
+      if (item.customization) continue;
       const product = products.find(
         (candidate) => candidate.slug === item.productSlug,
       );

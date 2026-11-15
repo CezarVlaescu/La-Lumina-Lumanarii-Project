@@ -7,8 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   formatPrice,
   formatWeight,
-  getProductPrice,
-  getProductStock,
   getProductVariant,
   seasonalCollectionGroups,
   specialThemeCollections,
@@ -20,6 +18,7 @@ import type {
   ThemeEffect,
   ThemeEffectIntensity,
 } from "../lib/hero-settings";
+import type { CandleCustomizerSettings } from "../lib/candle-customizer";
 import { CookieNotice } from "./cookie-notice";
 import { SeasonalEffect } from "./seasonal-effect";
 import { NewsletterForm } from "./newsletter-form";
@@ -31,7 +30,13 @@ import {
   MenuIcon,
   SearchIcon,
 } from "./icons";
-import { getCartLineId, StoreProvider, useStore } from "./store-provider";
+import {
+  getCartLineId,
+  getCartLineStock,
+  getCartLineUnitPrice,
+  StoreProvider,
+  useStore,
+} from "./store-provider";
 
 const navigation = [
   { href: "/", label: "Acasă" },
@@ -108,6 +113,12 @@ function Header({
             href="/lumanari"
           >
             Lumânări
+          </Link>
+          <Link
+            className={pathname === "/creeaza-ti-lumanarea" ? "nav-link nav-link--active" : "nav-link"}
+            href="/creeaza-ti-lumanarea"
+          >
+            Creează-ți lumânarea
           </Link>
           <div className="nav-collections">
             <Link
@@ -227,6 +238,9 @@ function Header({
           {navigation.slice(0, 2).map((item) => (
             <Link href={item.href} onClick={() => setMenuOpen(false)} key={item.href}>{item.label}</Link>
           ))}
+          <Link href="/creeaza-ti-lumanarea" onClick={() => setMenuOpen(false)}>
+            Creează-ți lumânarea
+          </Link>
           <details className="mobile-collections">
             <summary>Colecții <span aria-hidden="true">+</span></summary>
             <div className="mobile-collections__content">
@@ -341,10 +355,17 @@ function CartDrawer() {
                 </div>
               )}
               <div className="cart-lines">
-              {lines.map(({ product, variantId, quantity }) => {
+              {lines.map((line) => {
+                const {
+                  product,
+                  variantId,
+                  quantity,
+                  customization,
+                  customizationDetails,
+                } = line;
                 const variant = getProductVariant(product, variantId);
-                const lineId = getCartLineId(product.slug, variantId);
-                const stock = getProductStock(product, variantId);
+                const lineId = getCartLineId(product.slug, variantId, customization);
+                const stock = getCartLineStock(line);
                 return (
                 <article className="cart-line" key={lineId}>
                   <div className="cart-line__image">
@@ -352,7 +373,41 @@ function CartDrawer() {
                   </div>
                   <div className="cart-line__info">
                     <Link href={`/lumanari/${product.slug}`} onClick={() => setCartOpen(false)}>{product.name}</Link>
-                    <span>{variant ? `Culoare: ${variant.name}` : product.subtitle}{product.weight ? ` · ${formatWeight(product.weight)}` : ""}</span>
+                    <span>
+                      {customizationDetails
+                        ? "Creație personalizată"
+                        : variant
+                          ? `Culoare: ${variant.name}`
+                          : product.subtitle}
+                      {product.weight ? ` · ${formatWeight(product.weight)}` : ""}
+                    </span>
+                    {customizationDetails && (
+                      <ul className="cart-customization">
+                        <li>
+                          Principală:{" "}
+                          <i style={{ backgroundColor: customizationDetails.primaryColor.hex }} />
+                          {customizationDetails.primaryColor.name}
+                        </li>
+                        <li>
+                          Secundară:{" "}
+                          {customizationDetails.secondaryColor ? (
+                            <>
+                              <i style={{ backgroundColor: customizationDetails.secondaryColor.hex }} />
+                              {customizationDetails.secondaryColor.name}
+                            </>
+                          ) : "fără"}
+                        </li>
+                        {customizationDetails.accentColors.length > 0 && (
+                          <li>
+                            Accente:{" "}
+                            {customizationDetails.accentColors.map((color) => (
+                              <i key={color.id} title={color.name} style={{ backgroundColor: color.hex }} />
+                            ))}
+                          </li>
+                        )}
+                        <li>Aromă: {customizationDetails.scent.name}</li>
+                      </ul>
+                    )}
                     <small className={stock <= 3 ? "cart-stock cart-stock--low" : "cart-stock"}>
                       {stock <= 3
                         ? `${stock} ${stock === 1 ? "bucată disponibilă" : "bucăți disponibile"}`
@@ -378,7 +433,7 @@ function CartDrawer() {
                       Elimină
                     </button>
                   </div>
-                  <strong>{formatPrice((getProductPrice(product, variantId) ?? 0) * quantity)}</strong>
+                  <strong>{formatPrice(getCartLineUnitPrice(line) * quantity)}</strong>
                 </article>
                 );
               })}
@@ -437,6 +492,7 @@ function Footer({ storeProfile }: { storeProfile: StoreProfile }) {
         <div>
           <h3>Magazin</h3>
           <Link href="/lumanari">Toate lumânările</Link>
+          <Link href="/creeaza-ti-lumanarea">Creează-ți lumânarea</Link>
           <Link href="/colectii">Colecții</Link>
           <Link href="/lumanari?sort=new">Noutăți</Link>
           <Link href="/lumanari?tema=craciun">Colecția de Crăciun</Link>
@@ -477,6 +533,7 @@ export function SiteShell({
   storeProfile,
   accountViewer,
   themeId,
+  customizerSettings,
 }: {
   children: React.ReactNode;
   effect: ThemeEffect;
@@ -486,12 +543,13 @@ export function SiteShell({
   storeProfile: StoreProfile;
   accountViewer: AccountViewer | null;
   themeId: string;
+  customizerSettings: CandleCustomizerSettings;
 }) {
   const pathname = usePathname();
   if (pathname.startsWith("/admin")) return <>{children}</>;
 
   return (
-    <StoreProvider products={products}>
+    <StoreProvider products={products} customizerSettings={customizerSettings}>
       <SeasonalEffect effect={effect} intensity={effectIntensity} />
       <Header
         key={pathname}

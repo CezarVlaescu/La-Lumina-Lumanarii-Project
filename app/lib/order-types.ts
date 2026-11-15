@@ -1,3 +1,8 @@
+import type {
+  CandleCustomization,
+  CandleCustomizationDetails,
+} from "./candle-customizer";
+
 export const orderStatuses = [
   "new",
   "confirmed",
@@ -52,6 +57,7 @@ export type OrderLineInput = {
   productSlug: string;
   variantId?: string;
   quantity: number;
+  customization?: CandleCustomization;
 };
 
 export type CheckoutInput = {
@@ -84,6 +90,7 @@ export type AdminOrderItem = {
   unitPrice: number;
   quantity: number;
   lineTotal: number;
+  customization: CandleCustomizationDetails | null;
 };
 
 export type OrderEmailDelivery = {

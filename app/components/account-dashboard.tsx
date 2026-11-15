@@ -353,9 +353,23 @@ export function AccountDashboard({
                     {order.items.map((item) => (
                       <p key={item.id}>
                         <span>
-                          {item.productName}
-                          {item.variantName ? ` · ${item.variantName}` : ""} ×{" "}
-                          {item.quantity}
+                          <span>
+                            {item.productName}
+                            {item.variantName ? ` · ${item.variantName}` : ""} ×{" "}
+                            {item.quantity}
+                          </span>
+                          {item.customization && (
+                            <small className="account-order-customization">
+                              {item.customization.primaryColor.name}
+                              {item.customization.secondaryColor
+                                ? ` + ${item.customization.secondaryColor.name}`
+                                : ""}
+                              {item.customization.accentColors.length
+                                ? ` + ${item.customization.accentColors.map((color) => color.name).join(", ")}`
+                                : ""}
+                              {` · ${item.customization.scent.name}`}
+                            </small>
+                          )}
                         </span>
                         <strong>
                           {item.lineTotal.toLocaleString("ro-RO")} lei

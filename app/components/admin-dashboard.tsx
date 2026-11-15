@@ -33,11 +33,14 @@ import { AdminHomepageSettings } from "./admin-homepage-settings";
 import { AdminEmailCampaigns } from "./admin-email-campaigns";
 import type { MarketingOverview } from "../lib/marketing-email-service";
 import type { NewsletterSubscriber } from "../lib/newsletter-model";
+import type { CandleCustomizerSettings } from "../lib/candle-customizer";
+import { AdminCustomizerSettings } from "./admin-customizer-settings";
 
 type AdminTab =
   | "overview"
   | "launch"
   | "products"
+  | "customizer"
   | "collections"
   | "orders"
   | "shipping"
@@ -52,6 +55,7 @@ const tabLabels: Record<AdminTab, string> = {
   overview: "Privire de ansamblu",
   launch: "Centru de lansare",
   products: "Produse",
+  customizer: "Personalizare",
   collections: "Colecții",
   orders: "Comenzi",
   shipping: "Livrare",
@@ -73,6 +77,7 @@ type AdminDashboardProps = {
   initialHomepageSettings: HomepageSettings;
   initialMarketingOverview: MarketingOverview;
   initialNewsletterSubscribers: NewsletterSubscriber[];
+  initialCustomizerSettings: CandleCustomizerSettings;
   initialLaunchReadiness: LaunchReadiness;
   userName: string;
   signOutHref: string;
@@ -88,6 +93,7 @@ export function AdminDashboard({
   initialHomepageSettings,
   initialMarketingOverview,
   initialNewsletterSubscribers,
+  initialCustomizerSettings,
   initialLaunchReadiness,
   userName,
   signOutHref,
@@ -105,6 +111,9 @@ export function AdminDashboard({
   const [heroSettings, setHeroSettings] = useState(initialHeroSettings);
   const [homepageSettings, setHomepageSettings] = useState(
     initialHomepageSettings,
+  );
+  const [customizerSettings, setCustomizerSettings] = useState(
+    initialCustomizerSettings,
   );
   const incompleteProducts = products.filter(
     (product) => product.price === null || !product.weight,
@@ -150,7 +159,7 @@ export function AdminDashboard({
         <nav aria-label="Administrare magazin">
           {(Object.keys(tabLabels) as AdminTab[]).map((item) => (
             <button className={tab === item ? "admin-nav admin-nav--active" : "admin-nav"} onClick={() => setTab(item)} key={item}>
-              <i>{item === "overview" ? "⌂" : item === "launch" ? "↗" : item === "products" ? "□" : item === "collections" ? "⌘" : item === "orders" ? "≡" : item === "shipping" ? "◇" : item === "homepage" ? "◫" : item === "hero" ? "✦" : item === "store" ? "◎" : item === "messages" ? "✉" : item === "campaigns" ? "@" : "⇄"}</i>
+              <i>{item === "overview" ? "⌂" : item === "launch" ? "↗" : item === "products" ? "□" : item === "customizer" ? "✎" : item === "collections" ? "⌘" : item === "orders" ? "≡" : item === "shipping" ? "◇" : item === "homepage" ? "◫" : item === "hero" ? "✦" : item === "store" ? "◎" : item === "messages" ? "✉" : item === "campaigns" ? "@" : "⇄"}</i>
               {tabLabels[item]}
             </button>
           ))}
@@ -221,6 +230,14 @@ export function AdminDashboard({
 
         {tab === "products" && (
           <AdminProducts products={products} onChange={setProducts} />
+        )}
+
+        {tab === "customizer" && (
+          <AdminCustomizerSettings
+            products={products}
+            settings={customizerSettings}
+            onChange={setCustomizerSettings}
+          />
         )}
 
         {tab === "orders" && (

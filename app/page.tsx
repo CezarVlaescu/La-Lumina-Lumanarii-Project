@@ -22,6 +22,7 @@ import {
 } from "./lib/homepage-settings";
 import { getAdminOrders } from "./lib/order-repository";
 import type { AdminOrder } from "./lib/order-types";
+import { getCandleCustomizerSettings } from "./lib/customizer-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -78,11 +79,18 @@ function bestSellingProducts(products: Product[], orders: AdminOrder[]) {
 }
 
 export default async function Home() {
-  const [products, heroSettings, homepageSettings, orders] = await Promise.all([
+  const [
+    products,
+    heroSettings,
+    homepageSettings,
+    orders,
+    customizerSettings,
+  ] = await Promise.all([
     getStoreProducts(),
     getHeroSettings(),
     getHomepageSettings(),
     getAdminOrders(),
+    getCandleCustomizerSettings(),
   ]);
   const hero = resolveActiveHero(heroSettings);
   const activeCollection = allCollectionThemes.find(
@@ -303,6 +311,40 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      {customizerSettings.enabled && (
+        <section
+          className="customizer-teaser page-shell"
+          aria-labelledby="customizer-teaser-title"
+        >
+          <div className="customizer-teaser__visual" aria-hidden="true">
+            <span className="customizer-teaser__candle">
+              <i />
+            </span>
+            <div className="customizer-teaser__palette">
+              {customizerSettings.colors
+                .filter((color) => color.enabled)
+                .slice(0, 6)
+                .map((color) => (
+                  <i key={color.id} style={{ backgroundColor: color.hex }} />
+                ))}
+            </div>
+          </div>
+          <div className="customizer-teaser__content">
+            <p className="eyebrow eyebrow--gold">Forma ta · culorile tale</p>
+            <h2 id="customizer-teaser-title">{customizerSettings.title}</h2>
+            <p>{customizerSettings.description}</p>
+            <ol>
+              <li><span>01</span>Alege modelul</li>
+              <li><span>02</span>Combină nuanțele</li>
+              <li><span>03</span>Alege aroma</li>
+            </ol>
+            <Link className="button button--primary" href="/creeaza-ti-lumanarea">
+              Începe creația <ArrowIcon />
+            </Link>
+          </div>
+        </section>
+      )}
 
       {products.length >= 3 && (
         <section className="scent-quiz">

@@ -8,6 +8,7 @@ const staticRoutes = [
   "/",
   "/lumanari",
   "/colectii",
+  "/creeaza-ti-lumanarea",
   "/poveste",
   "/ingrijire",
   "/contact",
