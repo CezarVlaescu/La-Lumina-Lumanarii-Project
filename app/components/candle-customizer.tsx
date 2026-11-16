@@ -253,6 +253,10 @@ export function CandleCustomizer({ products, settings }: Props) {
           <div className="customizer-step__heading">
             <span>01</span><div><p>Forma</p><h2 id="customizer-type">Alege tipul lumânării</h2></div>
           </div>
+          <p className="customizer-product-options__hint">
+            <span>Glisează pentru mai multe modele</span>
+            <span aria-hidden="true">→</span>
+          </p>
           <div className="customizer-product-options">
             {availableProducts.map((entry) => (
               <button

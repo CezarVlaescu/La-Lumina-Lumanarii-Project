@@ -379,10 +379,14 @@ test("keeps the candle creator usable on mobile", async () => {
 
   assert.match(component, /customizer-mobile-preview/);
   assert.match(component, /customizer-mobile-action/);
+  assert.match(component, /Glisează pentru mai multe modele/);
   assert.match(styles, /\.customizer-mobile-action\s*\{/);
   assert.match(styles, /position:\s*fixed/);
   assert.match(styles, /\.customizer-preview\s*\{\s*display:\s*none;/s);
   assert.match(styles, /scroll-snap-type:\s*x mandatory/);
+  assert.match(styles, /overscroll-behavior-inline:\s*contain/);
+  assert.match(styles, /grid-template-columns:\s*40px minmax\(0, 1fr\)/);
+  assert.match(styles, /place-items:\s*center start/);
 });
 
 test("does not expose implementation notes in public account and contact pages", async () => {
