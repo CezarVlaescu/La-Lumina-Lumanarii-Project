@@ -1,4 +1,4 @@
-import type { Product } from "./catalog";
+import { getProductScentIds, type Product, type ProductVariant } from "./catalog";
 
 export type CustomizerColor = {
   id: string;
@@ -263,6 +263,40 @@ export function resolveCatalogProductAttributes(
       : undefined,
     secondaryColor: product.secondaryColorId
       ? settings.colors.find((entry) => entry.id === product.secondaryColorId)
+      : undefined,
+  };
+}
+
+export function getCatalogProductScents(
+  settings: CandleCustomizerSettings,
+  product: Product,
+) {
+  const allowedIds = getProductScentIds(product);
+  return settings.scents.filter(
+    (scent) => scent.enabled && allowedIds.includes(scent.id),
+  );
+}
+
+export function resolveProductVariantColors(
+  settings: CandleCustomizerSettings,
+  product: Product,
+  variant?: ProductVariant,
+) {
+  const hasVariantColorTemplate = Boolean(
+    variant?.primaryColorId || variant?.secondaryColorId,
+  );
+  const primaryColorId = hasVariantColorTemplate
+    ? variant?.primaryColorId
+    : product.primaryColorId;
+  const secondaryColorId = hasVariantColorTemplate
+    ? variant?.secondaryColorId
+    : product.secondaryColorId;
+  return {
+    primaryColor: primaryColorId
+      ? settings.colors.find((color) => color.id === primaryColorId)
+      : undefined,
+    secondaryColor: secondaryColorId
+      ? settings.colors.find((color) => color.id === secondaryColorId)
       : undefined,
   };
 }

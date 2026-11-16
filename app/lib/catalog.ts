@@ -2,6 +2,8 @@ export type ProductVariant = {
   id: string;
   name: string;
   swatch: string;
+  primaryColorId?: string;
+  secondaryColorId?: string;
   image: string;
   gallery: string[];
   price?: number | null;
@@ -25,6 +27,7 @@ export type Product = {
   burnTime?: string;
   weight?: string;
   scentId?: string;
+  scentIds?: string[];
   primaryColorId?: string;
   secondaryColorId?: string;
   details: string[];
@@ -656,6 +659,19 @@ export const collections = [
 
 export function getProductVariant(product: Product, variantId?: string) {
   return product.variants?.find((variant) => variant.id === variantId);
+}
+
+export function getProductScentIds(product: Product) {
+  return Array.from(
+    new Set(
+      (product.scentIds?.length
+        ? product.scentIds
+        : product.scentId
+          ? [product.scentId]
+          : []
+      ).filter(Boolean),
+    ),
+  );
 }
 
 export function getProductPrice(product: Product, variantId?: string) {

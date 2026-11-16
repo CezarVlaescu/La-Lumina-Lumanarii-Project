@@ -53,6 +53,13 @@ function parseLines(value: unknown): OrderLineInput[] {
       typeof candidate.variantId === "string" && candidate.variantId.trim()
         ? candidate.variantId.trim()
         : undefined;
+    const scentId =
+      typeof candidate.scentId === "string" && candidate.scentId.trim()
+        ? candidate.scentId.trim()
+        : undefined;
+    if (scentId && !/^[a-z0-9-]{1,80}$/.test(scentId)) {
+      throw new Error(`Aroma produsului ${index + 1} nu este validă.`);
+    }
     const quantity = Number(candidate.quantity);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
       throw new Error(`Cantitatea produsului ${index + 1} nu este validă.`);
@@ -89,7 +96,12 @@ function parseLines(value: unknown): OrderLineInput[] {
         `Produsul ${index + 1} nu poate avea simultan variantă standard și personalizare.`,
       );
     }
-    return { productSlug, variantId, quantity, customization };
+    if (customization && scentId) {
+      throw new Error(
+        `Produsul ${index + 1} nu poate avea simultan aromă standard și personalizare.`,
+      );
+    }
+    return { productSlug, variantId, scentId, quantity, customization };
   });
 }
 

@@ -23,6 +23,10 @@ function stringArray(value: unknown) {
     .filter(Boolean);
 }
 
+function uniqueStringArray(value: unknown) {
+  return Array.from(new Set(stringArray(value)));
+}
+
 function nullablePrice(value: unknown): number | null {
   if (value === null || value === "" || value === undefined) return null;
   const parsed = Number(value);
@@ -58,6 +62,8 @@ function variants(value: unknown): ProductVariant[] | undefined {
       id,
       name,
       swatch: text(candidate.swatch, "#d9c3a5"),
+      primaryColorId: optionalText(candidate.primaryColorId),
+      secondaryColorId: optionalText(candidate.secondaryColorId),
       image: text(candidate.image),
       gallery: stringArray(candidate.gallery),
       price: nullablePrice(candidate.price),
@@ -68,6 +74,25 @@ function variants(value: unknown): ProductVariant[] | undefined {
   const ids = new Set(parsed.map((variant) => variant.id));
   if (ids.size !== parsed.length) {
     throw new Error("Fiecare variantă trebuie să aibă un identificator unic.");
+  }
+
+  for (const [index, variant] of parsed.entries()) {
+    if (
+      variant.primaryColorId &&
+      variant.primaryColorId === variant.secondaryColorId
+    ) {
+      throw new Error(
+        `Varianta ${index + 1} nu poate avea aceeași culoare principală și secundară.`,
+      );
+    }
+  }
+  const primaryColorIds = parsed.flatMap((variant) =>
+    variant.primaryColorId ? [variant.primaryColorId] : [],
+  );
+  if (new Set(primaryColorIds).size !== primaryColorIds.length) {
+    throw new Error(
+      "Fiecare variantă trebuie să aibă o culoare principală diferită.",
+    );
   }
 
   return parsed;
@@ -97,6 +122,20 @@ export function parseProductInput(value: unknown): Product {
 
   const gallery = stringArray(candidate.gallery);
   const image = text(candidate.image, gallery[0] ?? "");
+  const legacyScentId = optionalText(candidate.scentId);
+  const scentIds = uniqueStringArray(candidate.scentIds);
+  const resolvedScentIds = scentIds.length
+    ? scentIds
+    : legacyScentId
+      ? [legacyScentId]
+      : [];
+  const primaryColorId = optionalText(candidate.primaryColorId);
+  const secondaryColorId = optionalText(candidate.secondaryColorId);
+  if (primaryColorId && primaryColorId === secondaryColorId) {
+    throw new Error(
+      "Produsul nu poate avea aceeași culoare principală și secundară.",
+    );
+  }
 
   return {
     slug,
@@ -110,9 +149,10 @@ export function parseProductInput(value: unknown): Product {
     collection: text(candidate.collection),
     burnTime: optionalText(candidate.burnTime),
     weight: optionalText(candidate.weight),
-    scentId: optionalText(candidate.scentId),
-    primaryColorId: optionalText(candidate.primaryColorId),
-    secondaryColorId: optionalText(candidate.secondaryColorId),
+    scentId: resolvedScentIds[0],
+    scentIds: resolvedScentIds,
+    primaryColorId,
+    secondaryColorId,
     details: stringArray(candidate.details),
     themes: stringArray(candidate.themes),
     variants: variants(candidate.variants),

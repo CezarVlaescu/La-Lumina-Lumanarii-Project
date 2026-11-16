@@ -119,7 +119,7 @@ export function AdminDashboard({
     (product) =>
       product.price === null ||
       !product.weight ||
-      !product.scentId ||
+      !(product.scentIds?.length || product.scentId) ||
       !product.primaryColorId,
   ).length;
   const newOrders = orders.filter((order) => order.status === "new").length;

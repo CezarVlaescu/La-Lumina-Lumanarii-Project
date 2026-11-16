@@ -2,9 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import type { Product } from "../lib/catalog";
-import type { CatalogProductAttributes } from "../lib/candle-customizer";
+import {
+  getCatalogProductScents,
+  resolveProductVariantColors,
+  type CandleCustomizerSettings,
+} from "../lib/candle-customizer";
 import {
   formatBurnTime,
   formatPrice,
@@ -18,12 +22,12 @@ import { getCartLineId, useStore } from "./store-provider";
 
 type ProductDetailProps = {
   product: Product;
-  productAttributes: CatalogProductAttributes;
+  customizerSettings: CandleCustomizerSettings;
 };
 
 export function ProductDetail({
   product,
-  productAttributes,
+  customizerSettings,
 }: ProductDetailProps) {
   const { addProduct, lines } = useStore();
   const [quantity, setQuantity] = useState(1);
@@ -34,10 +38,27 @@ export function ProductDetail({
         getProductStock(product, variant.id) > 0,
     )?.id ?? product.variants?.[0]?.id ?? "",
   );
+  const availableScents = getCatalogProductScents(
+    customizerSettings,
+    product,
+  );
+  const [selectedScentId, setSelectedScentId] = useState(
+    availableScents[0]?.id ?? "",
+  );
   const [addMessage, setAddMessage] = useState("");
   const selectedVariant = product.variants?.find(
     (variant) => variant.id === selectedVariantId,
   );
+  const selectedScent = availableScents.find(
+    (scent) => scent.id === selectedScentId,
+  );
+  const selectedVariantColors = resolveProductVariantColors(
+    customizerSettings,
+    product,
+    selectedVariant,
+  );
+  const primaryColor = selectedVariantColors.primaryColor;
+  const secondaryColor = selectedVariantColors.secondaryColor;
   const gallery = selectedVariant?.gallery ?? product.gallery;
   const [activeImage, setActiveImage] = useState(
     selectedVariant?.image ?? product.image,
@@ -51,17 +72,32 @@ export function ProductDetail({
 
   function addSelectedQuantity() {
     if (selectedPrice === null || selectedStock < 1) return;
-    const lineId = getCartLineId(product.slug, selectedVariantId || undefined);
+    const lineId = getCartLineId(
+      product.slug,
+      selectedVariantId || undefined,
+      undefined,
+      selectedScent?.id,
+    );
     const quantityInCart =
       lines.find(
         (line) =>
-          getCartLineId(line.product.slug, line.variantId) === lineId,
+          getCartLineId(
+            line.product.slug,
+            line.variantId,
+            line.customization,
+            line.scentId,
+          ) === lineId,
       )?.quantity ?? 0;
     const addedQuantity = Math.max(
       0,
       Math.min(quantity, selectedStock - quantityInCart),
     );
-    addProduct(product, selectedVariantId || undefined, quantity);
+    addProduct(
+      product,
+      selectedVariantId || undefined,
+      quantity,
+      selectedScent?.id,
+    );
     setAddMessage(
       addedQuantity > 0
         ? addedQuantity === 1
@@ -126,57 +162,43 @@ export function ProductDetail({
             <span>{formatPrice(selectedPrice)}</span>
           </div>
           <p className="product-detail__description">{product.description}</p>
-          {(productAttributes.scent ||
-            productAttributes.primaryColor ||
-            productAttributes.secondaryColor) && (
+          {(primaryColor || secondaryColor) && (
             <section
               className="product-attributes"
               aria-labelledby="product-attributes-title"
             >
               <div className="product-attributes__heading">
-                <span>Aromă și cromatică</span>
+                <span>Cromatică</span>
                 <h2 id="product-attributes-title">Caracterul lumânării</h2>
               </div>
               <div className="product-attributes__grid">
-                {productAttributes.scent && (
-                  <article className="product-attribute product-attribute--scent">
-                    <i aria-hidden="true">✦</i>
-                    <div>
-                      <span>Aromă</span>
-                      <strong>{productAttributes.scent.name}</strong>
-                      {productAttributes.scent.description && (
-                        <small>{productAttributes.scent.description}</small>
-                      )}
-                    </div>
-                  </article>
-                )}
-                {productAttributes.primaryColor && (
+                {primaryColor && (
                   <article className="product-attribute">
                     <i
                       className="product-attribute__swatch"
                       style={{
-                        backgroundColor: productAttributes.primaryColor.hex,
+                        backgroundColor: primaryColor.hex,
                       }}
                       aria-hidden="true"
                     />
                     <div>
                       <span>Culoare principală</span>
-                      <strong>{productAttributes.primaryColor.name}</strong>
+                      <strong>{primaryColor.name}</strong>
                     </div>
                   </article>
                 )}
-                {productAttributes.secondaryColor && (
+                {secondaryColor && (
                   <article className="product-attribute">
                     <i
                       className="product-attribute__swatch"
                       style={{
-                        backgroundColor: productAttributes.secondaryColor.hex,
+                        backgroundColor: secondaryColor.hex,
                       }}
                       aria-hidden="true"
                     />
                     <div>
                       <span>Culoare secundară</span>
-                      <strong>{productAttributes.secondaryColor.name}</strong>
+                      <strong>{secondaryColor.name}</strong>
                     </div>
                   </article>
                 )}
@@ -186,24 +208,71 @@ export function ProductDetail({
           {Boolean(product.variants?.length) && (
             <div className="product-variants">
               <div className="product-variants__heading">
-                <span>Culoare</span>
-                <strong>{selectedVariant?.name}</strong>
+                <span>Culoare principală</span>
+                <strong>{primaryColor?.name ?? selectedVariant?.name}</strong>
               </div>
               <div className="product-variants__options">
-                {product.variants?.map((variant) => (
+                {product.variants?.map((variant) => {
+                  const colors = resolveProductVariantColors(
+                    customizerSettings,
+                    product,
+                    variant,
+                  );
+                  const label = colors.primaryColor?.name ?? variant.name;
+                  return (
+                    <button
+                      type="button"
+                      className={variant.id === selectedVariantId ? "variant-option variant-option--active" : "variant-option"}
+                      key={variant.id}
+                      onClick={() => selectVariant(variant.id)}
+                      aria-pressed={variant.id === selectedVariantId}
+                      aria-label={`Alege culoarea principală ${label}${colors.secondaryColor ? ` cu secundară ${colors.secondaryColor.name}` : ""}`}
+                      title={colors.secondaryColor ? `${label} + ${colors.secondaryColor.name}` : label}
+                    >
+                      <span className="variant-option__swatches" aria-hidden="true">
+                        <i style={{ backgroundColor: colors.primaryColor?.hex ?? variant.swatch }} />
+                        {colors.secondaryColor && (
+                          <i style={{ backgroundColor: colors.secondaryColor.hex }} />
+                        )}
+                      </span>
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {availableScents.length > 0 && (
+            <section className="product-scents" aria-labelledby="product-scents-title">
+              <div className="product-variants__heading">
+                <span id="product-scents-title">Alege aroma</span>
+                <strong>{selectedScent?.name}</strong>
+              </div>
+              <div className="product-scents__options">
+                {availableScents.map((scent) => (
                   <button
                     type="button"
-                    className={variant.id === selectedVariantId ? "variant-option variant-option--active" : "variant-option"}
-                    key={variant.id}
-                    onClick={() => selectVariant(variant.id)}
-                    aria-pressed={variant.id === selectedVariantId}
+                    className={
+                      scent.id === selectedScentId
+                        ? "product-scent-option product-scent-option--active"
+                        : "product-scent-option"
+                    }
+                    aria-pressed={scent.id === selectedScentId}
+                    onClick={() => {
+                      setSelectedScentId(scent.id);
+                      setAddMessage("");
+                    }}
+                    key={scent.id}
                   >
-                    <i style={{ "--swatch-color": variant.swatch } as CSSProperties} />
-                    <span>{variant.name}</span>
+                    <i aria-hidden="true">✦</i>
+                    <span>
+                      <strong>{scent.name}</strong>
+                      {scent.description && <small>{scent.description}</small>}
+                    </span>
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
           )}
           <div className="scent-pyramid">
             <span>Detalii vizuale</span>

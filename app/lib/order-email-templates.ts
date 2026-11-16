@@ -31,6 +31,7 @@ function itemRows(order: AdminOrder) {
           <td style="padding:12px 0;border-bottom:1px solid #302432;color:#e5dcd2;font-size:14px;line-height:1.5">
             ${escapeHtml(item.quantity)} × ${escapeHtml(item.productName)}
             ${item.variantName ? `<div style="color:#8f8288;font-size:12px">Culoare: ${escapeHtml(item.variantName)}</div>` : ""}
+            ${item.scentName ? `<div style="color:#8f8288;font-size:12px">Aromă: ${escapeHtml(item.scentName)}</div>` : ""}
             ${
               item.customization
                 ? `<div style="margin-top:5px;color:#a99ca2;font-size:12px;line-height:1.55">${customizationSummary(
@@ -90,7 +91,7 @@ function customerConfirmation(order: AdminOrder): OrderEmailMessage {
   const textItems = order.items
     .map(
       (item) =>
-        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}${item.customization ? `\n  ${customizationSummary(item.customization).join(" · ")}` : ""}`,
+        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}${item.scentName ? `\n  Aromă: ${item.scentName}` : ""}${item.customization ? `\n  ${customizationSummary(item.customization).join(" · ")}` : ""}`,
     )
     .join("\n");
 
@@ -144,7 +145,7 @@ function adminNewOrder(order: AdminOrder): OrderEmailMessage {
   const textItems = order.items
     .map(
       (item) =>
-        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}${item.customization ? `\n  ${customizationSummary(item.customization).join(" · ")}` : ""}`,
+        `${item.quantity} × ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}: ${money(item.lineTotal)}${item.scentName ? `\n  Aromă: ${item.scentName}` : ""}${item.customization ? `\n  ${customizationSummary(item.customization).join(" · ")}` : ""}`,
     )
     .join("\n");
 

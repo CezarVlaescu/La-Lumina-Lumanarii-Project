@@ -328,8 +328,8 @@ test("renders the candle creator with visible options", async () => {
   assert.match(html, /Adaugă creația în coș/);
 });
 
-test("persists and renders product scent and color attributes", async () => {
-  const [repository, editor, detail, productPage, migration] =
+test("persists and renders product aromas and two-color variants", async () => {
+  const [repository, editor, detail, productPage, migration, orders, cart] =
     await Promise.all([
       readFile(
         new URL("../app/lib/catalog-repository.ts", import.meta.url),
@@ -349,23 +349,38 @@ test("persists and renders product scent and color attributes", async () => {
       ),
       readFile(
         new URL(
-          "../supabase/migrations/202611160001_product_attributes.sql",
+          "../supabase/migrations/202611160002_product_variants_and_scents.sql",
           import.meta.url,
         ),
         "utf8",
       ),
+      readFile(
+        new URL("../app/lib/order-repository.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/components/store-provider.tsx", import.meta.url),
+        "utf8",
+      ),
     ]);
 
-  assert.match(repository, /scent_id:\s*product\.scentId/);
+  assert.match(repository, /scent_ids_json:\s*scentIds/);
   assert.match(repository, /primary_color_id:\s*product\.primaryColorId/);
   assert.match(repository, /secondary_color_id:\s*product\.secondaryColorId/);
   assert.match(editor, /Aromă și culori/);
-  assert.match(editor, /Alege aroma produsului/);
+  assert.match(editor, /Arome disponibile/);
+  assert.match(editor, /Culoare principală \*/);
+  assert.match(editor, /Culoare secundară/);
   assert.match(detail, /Caracterul lumânării/);
+  assert.match(detail, /Alege aroma/);
+  assert.match(detail, /variant-option__swatches/);
   assert.match(productPage, /additionalProperty/);
+  assert.match(migration, /add column if not exists scent_ids_json jsonb/);
   assert.match(migration, /add column if not exists scent_id text/);
-  assert.match(migration, /add column if not exists primary_color_id text/);
-  assert.match(migration, /add column if not exists secondary_color_id text/);
+  assert.match(migration, /add column if not exists scent_name text/);
+  assert.match(orders, /scent_name:\s*line\.scentName/);
+  assert.match(cart, /scentId\?: string/);
+  assert.match(cart, /getCatalogProductScents/);
 });
 
 test("keeps the candle creator usable on mobile", async () => {

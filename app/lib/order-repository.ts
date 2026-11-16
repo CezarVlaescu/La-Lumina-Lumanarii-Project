@@ -7,6 +7,7 @@ import {
 } from "../../db/schema";
 import {
   getProductPrice,
+  getProductScentIds,
   getProductStock,
   getProductVariant,
 } from "./catalog";
@@ -17,6 +18,7 @@ import {
 } from "./homepage-settings";
 import {
   candleCustomizationKey,
+  getCatalogProductScents,
   getCustomizerPrice,
   getCustomizerProductSettings,
   resolveCandleCustomization,
@@ -56,6 +58,8 @@ type AuthoritativeLine = {
   productImage: string;
   variantId?: string;
   variantName?: string;
+  scentId?: string;
+  scentName?: string;
   variantIndex?: number;
   unitPriceCents: number;
   quantity: number;
@@ -130,6 +134,8 @@ function supabaseItemToRow(row: SupabaseRow): OrderItemRow {
     productImage: String(row.product_image ?? ""),
     variantId: nullableText(row.variant_id),
     variantName: nullableText(row.variant_name),
+    scentId: nullableText(row.scent_id),
+    scentName: nullableText(row.scent_name),
     customizationJson:
       rawCustomization && typeof rawCustomization === "object"
         ? JSON.stringify(rawCustomization)
@@ -185,6 +191,8 @@ function rowItemToAdmin(item: OrderItemRow): AdminOrderItem {
     productImage: item.productImage,
     variantId: item.variantId,
     variantName: item.variantName,
+    scentId: item.scentId,
+    scentName: item.scentName,
     customization: parseCustomizationDetails(item.customizationJson),
     unitPrice: money(item.unitPriceCents),
     quantity: item.quantity,
@@ -300,6 +308,7 @@ async function authoritativeLines(input: CheckoutInput) {
     {
       productSlug: string;
       variantId?: string;
+      scentId?: string;
       quantity: number;
       customization?: CandleCustomization;
     }
@@ -308,11 +317,12 @@ async function authoritativeLines(input: CheckoutInput) {
   for (const line of input.lines) {
     const key = `${inventorySku(line.productSlug, line.variantId)}::${candleCustomizationKey(
       line.customization,
-    )}`;
+    )}::${line.scentId ?? "fara-aroma"}`;
     const existing = grouped.get(key);
     grouped.set(key, {
       productSlug: line.productSlug,
       variantId: line.variantId,
+      scentId: line.scentId,
       quantity: (existing?.quantity ?? 0) + line.quantity,
       customization: line.customization,
     });
@@ -378,6 +388,21 @@ async function authoritativeLines(input: CheckoutInput) {
       throw new Error(`Varianta pentru ${product.name} nu mai este disponibilă.`);
     }
 
+    const configuredScentIds = getProductScentIds(product);
+    const availableScents = getCatalogProductScents(
+      customizerSettings,
+      product,
+    );
+    const scent = requested.scentId
+      ? availableScents.find((entry) => entry.id === requested.scentId)
+      : undefined;
+    if (configuredScentIds.length && !scent) {
+      throw new Error(`Alege o aromă validă pentru ${product.name}.`);
+    }
+    if (!configuredScentIds.length && requested.scentId) {
+      throw new Error(`Aroma pentru ${product.name} nu mai este disponibilă.`);
+    }
+
     const price = getProductPrice(product, requested.variantId);
     if (price === null) {
       throw new Error(`${product.name} nu are încă un preț disponibil.`);
@@ -398,6 +423,8 @@ async function authoritativeLines(input: CheckoutInput) {
       productImage: variant?.image || product.image,
       variantId: variant?.id,
       variantName: variant?.name,
+      scentId: scent?.id,
+      scentName: scent?.name,
       variantIndex: variant
         ? product.variants?.findIndex((candidate) => candidate.id === variant.id)
         : undefined,
@@ -491,6 +518,8 @@ export async function createOrder(input: CheckoutInput) {
             product_image: line.productImage,
             variant_id: line.variantId ?? null,
             variant_name: line.variantName ?? null,
+            scent_id: line.scentId ?? null,
+            scent_name: line.scentName ?? null,
             variant_index:
               typeof line.variantIndex === "number" && line.variantIndex >= 0
                 ? line.variantIndex
@@ -649,9 +678,9 @@ export async function createOrder(input: CheckoutInput) {
         .prepare(
           `INSERT INTO store_order_items (
             id, order_id, product_slug, product_name, product_image,
-            variant_id, variant_name, customization_json,
-            unit_price_cents, quantity, line_total_cents
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            variant_id, variant_name, scent_id, scent_name,
+            customization_json, unit_price_cents, quantity, line_total_cents
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           crypto.randomUUID(),
@@ -661,6 +690,8 @@ export async function createOrder(input: CheckoutInput) {
           line.productImage,
           line.variantId ?? null,
           line.variantName ?? null,
+          line.scentId ?? null,
+          line.scentName ?? null,
           line.customization ? JSON.stringify(line.customization) : null,
           line.unitPriceCents,
           line.quantity,

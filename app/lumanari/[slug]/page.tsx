@@ -120,7 +120,7 @@ export default async function CandleProductPage({ params }: ProductPageProps) {
       />
       <ProductDetail
         product={product}
-        productAttributes={productAttributes}
+        customizerSettings={customizerSettings}
       />
       <section className="section page-shell related-products">
         <div className="section-heading section-heading--split">

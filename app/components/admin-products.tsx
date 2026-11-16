@@ -39,6 +39,7 @@ function emptyProduct(): ProductDraft {
     collection: "",
     details: [],
     themes: [],
+    scentIds: [],
     stock: 0,
     status: "draft",
     featured: false,
@@ -55,6 +56,11 @@ function editableProduct(product: ManagedProduct): ProductDraft {
     gallery: [...product.gallery],
     details: [...product.details],
     themes: [...product.themes],
+    scentIds: product.scentIds?.length
+      ? [...product.scentIds]
+      : product.scentId
+        ? [product.scentId]
+        : [],
     variants: product.variants?.map((variant) => ({
       ...variant,
       gallery: [...variant.gallery],
@@ -91,7 +97,7 @@ export function AdminProducts({
     const search = query.toLocaleLowerCase("ro").trim();
     if (!search) return products;
     return products.filter((product) =>
-      `${product.name} ${product.collection} ${product.category} ${product.scentId ?? ""} ${product.primaryColorId ?? ""} ${product.secondaryColorId ?? ""}`
+      `${product.name} ${product.collection} ${product.category} ${(product.scentIds ?? [product.scentId ?? ""]).join(" ")} ${product.primaryColorId ?? ""} ${product.secondaryColorId ?? ""}`
         .toLocaleLowerCase("ro")
         .includes(search),
     );
@@ -119,14 +125,23 @@ export function AdminProducts({
       if (!current) return current;
       const variants = current.variants ?? [];
       const nextNumber = variants.length + 1;
+      const usedColorIds = new Set(
+        variants.flatMap((variant) =>
+          variant.primaryColorId ? [variant.primaryColorId] : [],
+        ),
+      );
+      const primaryColor = customizerSettings.colors.find(
+        (color) => color.enabled && !usedColorIds.has(color.id),
+      );
       return {
         ...current,
         variants: [
           ...variants,
           {
-            id: `varianta-${nextNumber}`,
-            name: `Varianta ${nextNumber}`,
-            swatch: "#d9c3a5",
+            id: primaryColor?.id ?? `varianta-${nextNumber}`,
+            name: primaryColor?.name ?? `Varianta ${nextNumber}`,
+            swatch: primaryColor?.hex ?? "#d9c3a5",
+            primaryColorId: primaryColor?.id,
             image: "",
             gallery: [],
             price: null,
@@ -146,6 +161,37 @@ export function AdminProducts({
           variantIndex === index ? { ...variant, ...patch } : variant,
         ),
       };
+    });
+  }
+
+  function updateVariantPrimaryColor(index: number, colorId: string) {
+    const color = customizerSettings.colors.find((entry) => entry.id === colorId);
+    const variant = draft?.variants?.[index];
+    if (!variant) return;
+    updateVariant(index, {
+      id: color?.id ?? variant.id,
+      name: color?.name ?? variant.name,
+      swatch: color?.hex ?? variant.swatch,
+      primaryColorId: color?.id,
+      secondaryColorId:
+        color?.id === variant.secondaryColorId
+          ? undefined
+          : variant.secondaryColorId,
+    });
+  }
+
+  function toggleScent(scentId: string) {
+    setDraft((current) => {
+      if (!current) return current;
+      const currentIds = current.scentIds?.length
+        ? current.scentIds
+        : current.scentId
+          ? [current.scentId]
+          : [];
+      const scentIds = currentIds.includes(scentId)
+        ? currentIds.filter((entry) => entry !== scentId)
+        : [...currentIds, scentId];
+      return { ...current, scentIds, scentId: scentIds[0] };
     });
   }
 
@@ -285,9 +331,16 @@ export function AdminProducts({
     }
   }
 
-  const selectedScent = draft?.scentId
-    ? customizerSettings.scents.find((entry) => entry.id === draft.scentId)
-    : undefined;
+  const selectedScentIds = draft
+    ? draft.scentIds?.length
+      ? draft.scentIds
+      : draft.scentId
+        ? [draft.scentId]
+        : []
+    : [];
+  const selectedScents = customizerSettings.scents.filter((entry) =>
+    selectedScentIds.includes(entry.id),
+  );
   const selectedPrimaryColor = draft?.primaryColorId
     ? customizerSettings.colors.find(
         (entry) => entry.id === draft.primaryColorId,
@@ -338,10 +391,24 @@ export function AdminProducts({
               <div>
                 <strong>{product.name}</strong>
                 <span>{product.collection || "Fără colecție"}</span>
-                <small className={product.scentId ? "" : "admin-product-missing"}>
-                  {customizerSettings.scents.find(
-                    (entry) => entry.id === product.scentId,
-                  )?.name ?? "Aromă necompletată"}
+                <small
+                  className={
+                    product.scentIds?.length || product.scentId
+                      ? ""
+                      : "admin-product-missing"
+                  }
+                >
+                  {customizerSettings.scents
+                    .filter((entry) =>
+                      (product.scentIds?.length
+                        ? product.scentIds
+                        : product.scentId
+                          ? [product.scentId]
+                          : []
+                      ).includes(entry.id),
+                    )
+                    .map((entry) => entry.name)
+                    .join(", ") || "Arome necompletate"}
                 </small>
               </div>
               <span>{formatPrice(product.price)}</span>
@@ -459,23 +526,34 @@ export function AdminProducts({
                   <span>03</span><div><h3>Aromă și culori</h3><p>Atributele folosite pe pagina produsului și pentru organizarea catalogului.</p></div>
                 </div>
                 <div className="admin-form-grid">
-                  <label className="admin-field admin-field--wide">
-                    <span>Aromă</span>
-                    <select
-                      value={draft.scentId ?? ""}
-                      onChange={(event) =>
-                        updateDraft({ scentId: event.target.value || undefined })
-                      }
-                    >
-                      <option value="">Alege aroma produsului</option>
-                      {customizerSettings.scents.map((scent) => (
-                        <option value={scent.id} key={scent.id}>
-                          {scent.name}{scent.enabled ? "" : " — inactivă"}
-                        </option>
-                      ))}
-                    </select>
-                    <small>Aromele se adaugă și se editează din secțiunea Personalizare.</small>
-                  </label>
+                  <div className="admin-field admin-field--wide">
+                    <span>Arome disponibile</span>
+                    <div className="admin-product-scent-options">
+                      {customizerSettings.scents.map((scent) => {
+                        const checked = selectedScentIds.includes(scent.id);
+                        return (
+                          <label
+                            className={checked ? "is-selected" : ""}
+                            key={scent.id}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleScent(scent.id)}
+                            />
+                            <strong>{scent.name}</strong>
+                            <small>
+                              {scent.description || "Fără descriere"}
+                              {scent.enabled ? "" : " · inactivă"}
+                            </small>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <small>
+                      Poți asocia mai multe arome. Clientul va alege una pe pagina produsului. Aromele se gestionează din Personalizare.
+                    </small>
+                  </div>
                   <label className="admin-field">
                     <span>Culoare principală</span>
                     <select
@@ -525,7 +603,11 @@ export function AdminProducts({
                 <div className="admin-product-attribute-preview">
                   <div>
                     <span>Aromă</span>
-                    <strong>{selectedScent?.name ?? "Necompletată"}</strong>
+                    <strong>
+                      {selectedScents.length
+                        ? selectedScents.map((scent) => scent.name).join(", ")
+                        : "Necompletată"}
+                    </strong>
                   </div>
                   <div>
                     {selectedPrimaryColor ? (
@@ -577,24 +659,75 @@ export function AdminProducts({
               <section className="admin-form-section">
                 <div className="admin-form-section__heading admin-form-section__heading--actions">
                   <span>05</span>
-                  <div><h3>Variante de culoare</h3><p>Adaugă variante doar când aceeași formă există în mai multe culori.</p></div>
+                  <div><h3>Variante de culoare</h3><p>Fiecare variantă are culoare principală și secundară. În magazin, clientul alege varianta după culoarea principală.</p></div>
                   <button onClick={addVariant}>+ Adaugă variantă</button>
                 </div>
                 <div className="admin-variant-list">
-                  {draft.variants?.map((variant, index) => (
+                  {draft.variants?.map((variant, index) => {
+                    const primaryColor = customizerSettings.colors.find(
+                      (color) => color.id === variant.primaryColorId,
+                    );
+                    const secondaryColor = customizerSettings.colors.find(
+                      (color) => color.id === variant.secondaryColorId,
+                    );
+                    const usedByAnotherVariant = new Set(
+                      (draft.variants ?? [])
+                        .filter((_, variantIndex) => variantIndex !== index)
+                        .flatMap((entry) =>
+                          entry.primaryColorId ? [entry.primaryColorId] : [],
+                        ),
+                    );
+                    return (
                     <article className="admin-variant-card" key={`${variant.id}-${index}`}>
                       <header>
-                        <strong>Varianta {index + 1}</strong>
+                        <strong>
+                          Varianta {index + 1} · {primaryColor?.name ?? variant.name}
+                          {secondaryColor ? ` + ${secondaryColor.name}` : ""}
+                        </strong>
                         <button onClick={() => removeVariant(index)}>Elimină</button>
                       </header>
                       <div className="admin-form-grid">
                         <label className="admin-field">
-                          <span>Nume culoare</span>
-                          <input value={variant.name} onChange={(event) => updateVariant(index, { name: event.target.value, id: slugify(event.target.value) || variant.id })} />
+                          <span>Culoare principală *</span>
+                          <select
+                            value={variant.primaryColorId ?? ""}
+                            onChange={(event) =>
+                              updateVariantPrimaryColor(index, event.target.value)
+                            }
+                          >
+                            <option value="">Alege culoarea principală</option>
+                            {customizerSettings.colors.map((color) => (
+                              <option
+                                value={color.id}
+                                disabled={usedByAnotherVariant.has(color.id)}
+                                key={color.id}
+                              >
+                                {color.name}{color.enabled ? "" : " — inactivă"}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                         <label className="admin-field">
-                          <span>Culoare selector</span>
-                          <input type="color" value={variant.swatch} onChange={(event) => updateVariant(index, { swatch: event.target.value })} />
+                          <span>Culoare secundară</span>
+                          <select
+                            value={variant.secondaryColorId ?? ""}
+                            onChange={(event) =>
+                              updateVariant(index, {
+                                secondaryColorId: event.target.value || undefined,
+                              })
+                            }
+                          >
+                            <option value="">Fără culoare secundară</option>
+                            {customizerSettings.colors.map((color) => (
+                              <option
+                                value={color.id}
+                                disabled={color.id === variant.primaryColorId}
+                                key={color.id}
+                              >
+                                {color.name}{color.enabled ? "" : " — inactivă"}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                         <label className="admin-field">
                           <span>Stoc variantă</span>
@@ -604,6 +737,22 @@ export function AdminProducts({
                           <span>Preț diferit (opțional)</span>
                           <input type="number" min="0" step="0.01" value={variant.price ?? ""} onChange={(event) => updateVariant(index, { price: event.target.value === "" ? null : Number(event.target.value) })} />
                         </label>
+                      </div>
+                      <div className="admin-variant-color-preview">
+                        <div>
+                          <i style={{ backgroundColor: primaryColor?.hex ?? variant.swatch }} />
+                          <span>Principală</span>
+                          <strong>{primaryColor?.name ?? variant.name}</strong>
+                        </div>
+                        <div>
+                          {secondaryColor ? (
+                            <i style={{ backgroundColor: secondaryColor.hex }} />
+                          ) : (
+                            <i className="admin-product-attribute-preview__empty" />
+                          )}
+                          <span>Secundară</span>
+                          <strong>{secondaryColor?.name ?? "Fără"}</strong>
+                        </div>
                       </div>
                       <label className="admin-upload admin-upload--compact">
                         <input type="file" accept="image/*" multiple onChange={(event) => uploadImages(event.target.files, index)} />
@@ -617,7 +766,8 @@ export function AdminProducts({
                         </div>
                       )}
                     </article>
-                  ))}
+                    );
+                  })}
                   {!draft.variants?.length && (
                     <p className="admin-empty-hint">Produsul nu are variante. Este perfect pentru modelele disponibile într-o singură culoare.</p>
                   )}

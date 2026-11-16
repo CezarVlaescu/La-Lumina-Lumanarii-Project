@@ -359,12 +359,14 @@ function CartDrawer() {
                 const {
                   product,
                   variantId,
+                  scentId,
+                  scentName,
                   quantity,
                   customization,
                   customizationDetails,
                 } = line;
                 const variant = getProductVariant(product, variantId);
-                const lineId = getCartLineId(product.slug, variantId, customization);
+                const lineId = getCartLineId(product.slug, variantId, customization, scentId);
                 const stock = getCartLineStock(line);
                 return (
                 <article className="cart-line" key={lineId}>
@@ -407,6 +409,9 @@ function CartDrawer() {
                         )}
                         <li>Aromă: {customizationDetails.scent.name}</li>
                       </ul>
+                    )}
+                    {!customizationDetails && scentName && (
+                      <small className="cart-line-scent">Aromă: {scentName}</small>
                     )}
                     <small className={stock <= 3 ? "cart-stock cart-stock--low" : "cart-stock"}>
                       {stock <= 3

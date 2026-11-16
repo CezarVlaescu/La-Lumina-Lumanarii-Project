@@ -443,6 +443,11 @@ export function AdminOrders({ orders, onChange }: AdminOrdersProps) {
                           : ""}
                         {item.quantity} × {formatPrice(item.unitPrice)}
                       </small>
+                      {!item.customization && item.scentName && (
+                        <span className="admin-order-customization">
+                          <small>Aromă: {item.scentName}</small>
+                        </span>
+                      )}
                       {item.customization && (
                         <span className="admin-order-customization">
                           <small>

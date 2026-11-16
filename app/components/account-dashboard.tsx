@@ -370,6 +370,11 @@ export function AccountDashboard({
                               {` · ${item.customization.scent.name}`}
                             </small>
                           )}
+                          {!item.customization && item.scentName && (
+                            <small className="account-order-customization">
+                              Aromă: {item.scentName}
+                            </small>
+                          )}
                         </span>
                         <strong>
                           {item.lineTotal.toLocaleString("ro-RO")} lei

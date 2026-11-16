@@ -56,6 +56,7 @@ export const paymentStatusLabels: Record<PaymentStatus, string> = {
 export type OrderLineInput = {
   productSlug: string;
   variantId?: string;
+  scentId?: string;
   quantity: number;
   customization?: CandleCustomization;
 };
@@ -87,6 +88,8 @@ export type AdminOrderItem = {
   productImage: string;
   variantId: string | null;
   variantName: string | null;
+  scentId: string | null;
+  scentName: string | null;
   unitPrice: number;
   quantity: number;
   lineTotal: number;

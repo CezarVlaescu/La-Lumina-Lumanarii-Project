@@ -38,6 +38,7 @@ type SupabaseCatalogProductRow = {
   burn_time: string | null;
   weight: string | null;
   scent_id: string | null;
+  scent_ids_json: unknown;
   primary_color_id: string | null;
   secondary_color_id: string | null;
   details_json: unknown;
@@ -63,6 +64,7 @@ function parseJsonArray<T>(value: unknown, fallback: T[]): T[] {
 }
 
 function rowToProduct(row: CatalogProductRow): ManagedProduct {
+  const scentIds = parseJsonArray<string>(row.scentIdsJson, []);
   return {
     slug: row.slug,
     name: row.name,
@@ -75,7 +77,12 @@ function rowToProduct(row: CatalogProductRow): ManagedProduct {
     collection: row.collection,
     burnTime: row.burnTime ?? undefined,
     weight: row.weight ?? undefined,
-    scentId: row.scentId ?? undefined,
+    scentId: scentIds[0] ?? row.scentId ?? undefined,
+    scentIds: scentIds.length
+      ? scentIds
+      : row.scentId
+        ? [row.scentId]
+        : [],
     primaryColorId: row.primaryColorId ?? undefined,
     secondaryColorId: row.secondaryColorId ?? undefined,
     details: parseJsonArray<string>(row.detailsJson, []),
@@ -96,6 +103,7 @@ function rowToProduct(row: CatalogProductRow): ManagedProduct {
 function supabaseRowToProduct(
   row: SupabaseCatalogProductRow,
 ): ManagedProduct {
+  const scentIds = parseJsonArray<string>(row.scent_ids_json, []);
   return {
     slug: row.slug,
     name: row.name,
@@ -108,7 +116,12 @@ function supabaseRowToProduct(
     collection: row.collection,
     burnTime: row.burn_time ?? undefined,
     weight: row.weight ?? undefined,
-    scentId: row.scent_id ?? undefined,
+    scentId: scentIds[0] ?? row.scent_id ?? undefined,
+    scentIds: scentIds.length
+      ? scentIds
+      : row.scent_id
+        ? [row.scent_id]
+        : [],
     primaryColorId: row.primary_color_id ?? undefined,
     secondaryColorId: row.secondary_color_id ?? undefined,
     details: parseJsonArray<string>(row.details_json, []),
@@ -197,6 +210,16 @@ export async function getStoreProduct(slug: string): Promise<Product | null> {
 export async function saveCatalogProduct(product: Product): Promise<ManagedProduct> {
   const now = new Date().toISOString();
   const status = product.status ?? "draft";
+  const scentIds = Array.from(
+    new Set(
+      (product.scentIds?.length
+        ? product.scentIds
+        : product.scentId
+          ? [product.scentId]
+          : []
+      ).filter(Boolean),
+    ),
+  );
   if (isSupabaseConfigured()) {
     const values = {
       id: product.slug,
@@ -214,7 +237,8 @@ export async function saveCatalogProduct(product: Product): Promise<ManagedProdu
       collection: product.collection.trim(),
       burn_time: product.burnTime?.trim() || null,
       weight: product.weight?.trim() || null,
-      scent_id: product.scentId?.trim() || null,
+      scent_id: scentIds[0] ?? null,
+      scent_ids_json: scentIds,
       primary_color_id: product.primaryColorId?.trim() || null,
       secondary_color_id: product.secondaryColorId?.trim() || null,
       details_json: product.details,
@@ -256,7 +280,8 @@ export async function saveCatalogProduct(product: Product): Promise<ManagedProdu
     collection: product.collection.trim(),
     burnTime: product.burnTime?.trim() || null,
     weight: product.weight?.trim() || null,
-    scentId: product.scentId?.trim() || null,
+    scentId: scentIds[0] ?? null,
+    scentIdsJson: JSON.stringify(scentIds),
     primaryColorId: product.primaryColorId?.trim() || null,
     secondaryColorId: product.secondaryColorId?.trim() || null,
     detailsJson: JSON.stringify(product.details),

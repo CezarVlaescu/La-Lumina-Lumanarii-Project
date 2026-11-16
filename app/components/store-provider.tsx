@@ -3,11 +3,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   getProductPrice,
+  getProductScentIds,
   getProductStock,
   type Product,
 } from "../lib/catalog";
 import {
   candleCustomizationKey,
+  getCatalogProductScents,
   getCustomizerPrice,
   getCustomizerProductSettings,
   resolveCandleCustomization,
@@ -19,6 +21,8 @@ import {
 export type CartLine = {
   product: Product;
   variantId?: string;
+  scentId?: string;
+  scentName?: string;
   quantity: number;
   customization?: CandleCustomization;
   customizationDetails?: CandleCustomizationDetails;
@@ -38,6 +42,7 @@ type StoreContextValue = {
     product: Product,
     variantId?: string,
     requestedQuantity?: number,
+    scentId?: string,
   ) => void;
   addConfiguredProduct: (
     product: Product,
@@ -54,6 +59,7 @@ type StoredCartLine = {
   slug: string;
   product?: Product;
   variantId?: string;
+  scentId?: string;
   quantity: number;
   customization?: CandleCustomization;
 };
@@ -62,10 +68,11 @@ export function getCartLineId(
   productSlug: string,
   variantId?: string,
   customization?: CandleCustomization,
+  scentId?: string,
 ) {
   return `${productSlug}::${variantId ?? "default"}::${candleCustomizationKey(
     customization,
-  )}`;
+  )}::${scentId ?? "fara-aroma"}`;
 }
 
 export function getCartLineUnitPrice(line: CartLine) {
@@ -144,6 +151,16 @@ function readStoredCart(
             getProductStock(product, variant.id) > 0,
         )?.id;
 
+    const requestedScentId =
+      typeof candidate.scentId === "string" ? candidate.scentId : undefined;
+    const availableScents = product
+      ? getCatalogProductScents(customizerSettings, product)
+      : [];
+    const scent =
+      availableScents.find((entry) => entry.id === requestedScentId) ??
+      availableScents[0];
+    if (product && getProductScentIds(product).length && !scent) return [];
+
     if (!product || !Number.isInteger(quantity) || quantity < 1) return [];
     const price = getProductPrice(product, variantId);
     const stock = getProductStock(product, variantId);
@@ -151,6 +168,8 @@ function readStoredCart(
     return [{
       product,
       variantId,
+      scentId: scent?.id,
+      scentName: scent?.name,
       quantity: Math.min(quantity, stock, 99),
       unitPrice: price,
     }];
@@ -187,9 +206,10 @@ export function StoreProvider({
 
   useEffect(() => {
     if (!hydrated) return;
-    const storedLines: StoredCartLine[] = lines.map(({ product, variantId, quantity, customization }) => ({
+    const storedLines: StoredCartLine[] = lines.map(({ product, variantId, scentId, quantity, customization }) => ({
       slug: product.slug,
       variantId,
+      scentId,
       quantity,
       customization,
     }));
@@ -235,7 +255,12 @@ export function StoreProvider({
       ),
       setCartOpen,
       dismissCartNotice: () => setCartNotice(""),
-      addProduct: (product, requestedVariantId, requestedQuantity = 1) => {
+      addProduct: (
+        product,
+        requestedVariantId,
+        requestedQuantity = 1,
+        requestedScentId,
+      ) => {
         const variantId =
           requestedVariantId &&
           product.variants?.some((variant) => variant.id === requestedVariantId)
@@ -246,11 +271,29 @@ export function StoreProvider({
           setCartNotice(`${product.name} nu mai este disponibil momentan.`);
           return;
         }
-        const lineId = getCartLineId(product.slug, variantId);
+        const availableScents = getCatalogProductScents(
+          customizerSettings,
+          product,
+        );
+        const scent =
+          availableScents.find((entry) => entry.id === requestedScentId) ??
+          availableScents[0];
+        if (getProductScentIds(product).length && !scent) {
+          setCartNotice(
+            `Aromele pentru ${product.name} nu sunt disponibile momentan.`,
+          );
+          return;
+        }
+        const lineId = getCartLineId(
+          product.slug,
+          variantId,
+          undefined,
+          scent?.id,
+        );
         const existingQuantity =
           lines.find(
             (line) =>
-              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+              getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId,
           )?.quantity ?? 0;
         const safeRequestedQuantity = Math.max(
           1,
@@ -273,11 +316,11 @@ export function StoreProvider({
 
         setLines((current) => {
           const existing = current.find(
-            (line) => getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+            (line) => getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId,
           );
           if (existing) {
             return current.map((line) =>
-              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId
+              getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId
                 ? { ...line, quantity: nextQuantity }
                 : line,
             );
@@ -285,6 +328,8 @@ export function StoreProvider({
           return [...current, {
             product,
             variantId,
+            scentId: scent?.id,
+            scentName: scent?.name,
             quantity: nextQuantity,
             unitPrice: getProductPrice(product, variantId) ?? 0,
           }];
@@ -320,7 +365,7 @@ export function StoreProvider({
         const existingQuantity =
           lines.find(
             (line) =>
-              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+              getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId,
           )?.quantity ?? 0;
         const safeRequestedQuantity = Math.max(
           1,
@@ -336,11 +381,11 @@ export function StoreProvider({
         setLines((current) => {
           const existing = current.find(
             (line) =>
-              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+              getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId,
           );
           if (existing) {
             return current.map((line) =>
-              getCartLineId(line.product.slug, line.variantId, line.customization) === lineId
+              getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId
                 ? { ...line, quantity: nextQuantity }
                 : line,
             );
@@ -363,14 +408,14 @@ export function StoreProvider({
       updateQuantity: (lineId, quantity) => {
         const target = lines.find(
           (line) =>
-            getCartLineId(line.product.slug, line.variantId, line.customization) === lineId,
+            getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId,
         );
         if (!target) return;
         if (quantity <= 0) {
           setLines((current) =>
             current.filter(
               (line) =>
-                getCartLineId(line.product.slug, line.variantId, line.customization) !== lineId,
+                getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) !== lineId,
             ),
           );
           setCartNotice(`Produsul ${target.product.name} a fost eliminat din coș.`);
@@ -381,7 +426,7 @@ export function StoreProvider({
         const nextQuantity = Math.min(Math.max(1, quantity), stock, 99);
         setLines((current) =>
           current.map((line) =>
-            getCartLineId(line.product.slug, line.variantId, line.customization) === lineId
+            getCartLineId(line.product.slug, line.variantId, line.customization, line.scentId) === lineId
               ? { ...line, quantity: nextQuantity }
               : line,
           ),

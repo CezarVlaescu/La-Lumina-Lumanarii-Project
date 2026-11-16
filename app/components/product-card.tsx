@@ -8,6 +8,7 @@ import {
   formatPrice,
   getProductCompareAtPrice,
   getProductPrice,
+  getProductScentIds,
   getProductStock,
 } from "../lib/catalog";
 import { BagIcon } from "./icons";
@@ -30,6 +31,7 @@ export function ProductCard({ product }: { product: Product }) {
   const available =
     displayPrice !== null &&
     getProductStock(product, selectedVariantId || undefined) > 0;
+  const requiresScentChoice = getProductScentIds(product).length > 1;
 
   return (
     <article className="product-card">
@@ -65,7 +67,14 @@ export function ProductCard({ product }: { product: Product }) {
             )}
             <span>{formatPrice(displayPrice)}</span>
           </strong>
-          {available ? (
+          {available && requiresScentChoice ? (
+            <Link
+              className="product-card__availability"
+              href={`/lumanari/${product.slug}`}
+            >
+              Alege aroma
+            </Link>
+          ) : available ? (
             <button
               className="quick-add"
               onClick={() => addProduct(product, selectedVariantId || undefined)}

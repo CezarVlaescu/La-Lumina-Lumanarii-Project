@@ -113,9 +113,10 @@ export function CheckoutForm({
           country: "România",
           note: form.get("note"),
           acceptsTerms: form.get("acceptsTerms") === "yes",
-          lines: lines.map(({ product, variantId, quantity, customization }) => ({
+          lines: lines.map(({ product, variantId, scentId, quantity, customization }) => ({
             productSlug: product.slug,
             variantId,
+            scentId,
             quantity,
             customization,
           })),
@@ -492,19 +493,20 @@ export function CheckoutForm({
         </div>
         <div className="checkout-products">
           {lines.map((line) => {
-            const { product, variantId, quantity, customization, customizationDetails } = line;
+            const { product, variantId, scentId, scentName, quantity, customization, customizationDetails } = line;
             const variant = getProductVariant(product, variantId);
             return (
-            <div className="checkout-product" key={getCartLineId(product.slug, variantId, customization)}>
+            <div className="checkout-product" key={getCartLineId(product.slug, variantId, customization, scentId)}>
               <div><Image src={variant?.image ?? product.image} alt="" fill unoptimized /><span>{quantity}</span></div>
               <p>
                 <strong>{product.name}</strong>
                 <small>
                   {customizationDetails
                     ? `${customizationDetails.primaryColor.name}${customizationDetails.secondaryColor ? ` + ${customizationDetails.secondaryColor.name}` : ""} · ${customizationDetails.scent.name}`
-                    : variant
-                      ? `Culoare: ${variant.name}`
-                      : formatWeight(product.weight)}
+                    : [
+                        variant ? `Culoare: ${variant.name}` : formatWeight(product.weight),
+                        scentName ? `Aromă: ${scentName}` : "",
+                      ].filter(Boolean).join(" · ")}
                 </small>
               </p>
               <b>{formatPrice(getCartLineUnitPrice(line) * quantity)}</b>
