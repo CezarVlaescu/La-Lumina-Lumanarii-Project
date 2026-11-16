@@ -24,6 +24,9 @@ export type Product = {
   collection: string;
   burnTime?: string;
   weight?: string;
+  scentId?: string;
+  primaryColorId?: string;
+  secondaryColorId?: string;
   details: string[];
   themes: string[];
   variants?: ProductVariant[];

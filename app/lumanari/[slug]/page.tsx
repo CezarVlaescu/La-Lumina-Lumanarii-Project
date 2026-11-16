@@ -6,6 +6,8 @@ import {
   getStoreProduct,
   getStoreProducts,
 } from "../../lib/catalog-repository";
+import { resolveCatalogProductAttributes } from "../../lib/candle-customizer";
+import { getCandleCustomizerSettings } from "../../lib/customizer-repository";
 import { absoluteSiteUrl, siteName } from "../../lib/site-config";
 
 type ProductPageProps = {
@@ -39,9 +41,16 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function CandleProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const products = await getStoreProducts();
+  const [products, customizerSettings] = await Promise.all([
+    getStoreProducts(),
+    getCandleCustomizerSettings(),
+  ]);
   const product = products.find((item) => item.slug === slug);
   if (!product) notFound();
+  const productAttributes = resolveCatalogProductAttributes(
+    customizerSettings,
+    product,
+  );
   const related = products
     .filter((item) => item.slug !== product.slug)
     .sort((a, b) => Number(b.collection === product.collection) - Number(a.collection === product.collection))
@@ -53,6 +62,23 @@ export default async function CandleProductPage({ params }: ProductPageProps) {
     product.price,
     ...(product.variants?.map((variant) => variant.price ?? product.price) ?? []),
   ].filter((price): price is number => price !== null);
+  const additionalProperty = [
+    productAttributes.scent && {
+      "@type": "PropertyValue",
+      name: "Aromă",
+      value: productAttributes.scent.name,
+    },
+    productAttributes.primaryColor && {
+      "@type": "PropertyValue",
+      name: "Culoare principală",
+      value: productAttributes.primaryColor.name,
+    },
+    productAttributes.secondaryColor && {
+      "@type": "PropertyValue",
+      name: "Culoare secundară",
+      value: productAttributes.secondaryColor.name,
+    },
+  ].filter(Boolean);
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -67,6 +93,7 @@ export default async function CandleProductPage({ params }: ProductPageProps) {
       "@type": "Brand",
       name: siteName,
     },
+    ...(additionalProperty.length ? { additionalProperty } : {}),
     ...(prices.length
       ? {
           offers: {
@@ -91,7 +118,10 @@ export default async function CandleProductPage({ params }: ProductPageProps) {
           __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <ProductDetail product={product} />
+      <ProductDetail
+        product={product}
+        productAttributes={productAttributes}
+      />
       <section className="section page-shell related-products">
         <div className="section-heading section-heading--split">
           <div><p className="eyebrow">Produse similare</p><h2>S-ar putea să-ți placă și.</h2></div>

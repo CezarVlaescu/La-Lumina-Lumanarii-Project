@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import type { Product } from "../lib/catalog";
+import type { CatalogProductAttributes } from "../lib/candle-customizer";
 import {
   formatBurnTime,
   formatPrice,
@@ -15,7 +16,15 @@ import {
 import { BagIcon } from "./icons";
 import { getCartLineId, useStore } from "./store-provider";
 
-export function ProductDetail({ product }: { product: Product }) {
+type ProductDetailProps = {
+  product: Product;
+  productAttributes: CatalogProductAttributes;
+};
+
+export function ProductDetail({
+  product,
+  productAttributes,
+}: ProductDetailProps) {
   const { addProduct, lines } = useStore();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(
@@ -117,6 +126,63 @@ export function ProductDetail({ product }: { product: Product }) {
             <span>{formatPrice(selectedPrice)}</span>
           </div>
           <p className="product-detail__description">{product.description}</p>
+          {(productAttributes.scent ||
+            productAttributes.primaryColor ||
+            productAttributes.secondaryColor) && (
+            <section
+              className="product-attributes"
+              aria-labelledby="product-attributes-title"
+            >
+              <div className="product-attributes__heading">
+                <span>Aromă și cromatică</span>
+                <h2 id="product-attributes-title">Caracterul lumânării</h2>
+              </div>
+              <div className="product-attributes__grid">
+                {productAttributes.scent && (
+                  <article className="product-attribute product-attribute--scent">
+                    <i aria-hidden="true">✦</i>
+                    <div>
+                      <span>Aromă</span>
+                      <strong>{productAttributes.scent.name}</strong>
+                      {productAttributes.scent.description && (
+                        <small>{productAttributes.scent.description}</small>
+                      )}
+                    </div>
+                  </article>
+                )}
+                {productAttributes.primaryColor && (
+                  <article className="product-attribute">
+                    <i
+                      className="product-attribute__swatch"
+                      style={{
+                        backgroundColor: productAttributes.primaryColor.hex,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <span>Culoare principală</span>
+                      <strong>{productAttributes.primaryColor.name}</strong>
+                    </div>
+                  </article>
+                )}
+                {productAttributes.secondaryColor && (
+                  <article className="product-attribute">
+                    <i
+                      className="product-attribute__swatch"
+                      style={{
+                        backgroundColor: productAttributes.secondaryColor.hex,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <span>Culoare secundară</span>
+                      <strong>{productAttributes.secondaryColor.name}</strong>
+                    </div>
+                  </article>
+                )}
+              </div>
+            </section>
+          )}
           {Boolean(product.variants?.length) && (
             <div className="product-variants">
               <div className="product-variants__heading">

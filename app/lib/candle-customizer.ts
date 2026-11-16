@@ -45,6 +45,12 @@ export type CandleCustomizationDetails = {
   scent: CustomizerScent;
 };
 
+export type CatalogProductAttributes = {
+  scent?: CustomizerScent;
+  primaryColor?: CustomizerColor;
+  secondaryColor?: CustomizerColor;
+};
+
 const defaultColors: CustomizerColor[] = [
   { id: "alb", name: "Alb", hex: "#f4efe4", enabled: true },
   { id: "crem", name: "Crem", hex: "#e4cfaa", enabled: true },
@@ -242,6 +248,23 @@ export function getCustomizerScents(
       scent.enabled &&
       (!config.scentIds.length || config.scentIds.includes(scent.id)),
   );
+}
+
+export function resolveCatalogProductAttributes(
+  settings: CandleCustomizerSettings,
+  product: Product,
+): CatalogProductAttributes {
+  return {
+    scent: product.scentId
+      ? settings.scents.find((entry) => entry.id === product.scentId)
+      : undefined,
+    primaryColor: product.primaryColorId
+      ? settings.colors.find((entry) => entry.id === product.primaryColorId)
+      : undefined,
+    secondaryColor: product.secondaryColorId
+      ? settings.colors.find((entry) => entry.id === product.secondaryColorId)
+      : undefined,
+  };
 }
 
 export function resolveCandleCustomization(

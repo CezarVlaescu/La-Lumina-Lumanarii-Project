@@ -37,6 +37,9 @@ type SupabaseCatalogProductRow = {
   collection: string;
   burn_time: string | null;
   weight: string | null;
+  scent_id: string | null;
+  primary_color_id: string | null;
+  secondary_color_id: string | null;
   details_json: unknown;
   themes_json: unknown;
   variants_json: unknown;
@@ -72,6 +75,9 @@ function rowToProduct(row: CatalogProductRow): ManagedProduct {
     collection: row.collection,
     burnTime: row.burnTime ?? undefined,
     weight: row.weight ?? undefined,
+    scentId: row.scentId ?? undefined,
+    primaryColorId: row.primaryColorId ?? undefined,
+    secondaryColorId: row.secondaryColorId ?? undefined,
     details: parseJsonArray<string>(row.detailsJson, []),
     themes: parseJsonArray<string>(row.themesJson, []),
     variants: parseJsonArray<NonNullable<Product["variants"]>[number]>(
@@ -102,6 +108,9 @@ function supabaseRowToProduct(
     collection: row.collection,
     burnTime: row.burn_time ?? undefined,
     weight: row.weight ?? undefined,
+    scentId: row.scent_id ?? undefined,
+    primaryColorId: row.primary_color_id ?? undefined,
+    secondaryColorId: row.secondary_color_id ?? undefined,
     details: parseJsonArray<string>(row.details_json, []),
     themes: parseJsonArray<string>(row.themes_json, []),
     variants: parseJsonArray<NonNullable<Product["variants"]>[number]>(
@@ -205,6 +214,9 @@ export async function saveCatalogProduct(product: Product): Promise<ManagedProdu
       collection: product.collection.trim(),
       burn_time: product.burnTime?.trim() || null,
       weight: product.weight?.trim() || null,
+      scent_id: product.scentId?.trim() || null,
+      primary_color_id: product.primaryColorId?.trim() || null,
+      secondary_color_id: product.secondaryColorId?.trim() || null,
       details_json: product.details,
       themes_json: product.themes,
       variants_json: product.variants ?? [],
@@ -244,6 +256,9 @@ export async function saveCatalogProduct(product: Product): Promise<ManagedProdu
     collection: product.collection.trim(),
     burnTime: product.burnTime?.trim() || null,
     weight: product.weight?.trim() || null,
+    scentId: product.scentId?.trim() || null,
+    primaryColorId: product.primaryColorId?.trim() || null,
+    secondaryColorId: product.secondaryColorId?.trim() || null,
     detailsJson: JSON.stringify(product.details),
     themesJson: JSON.stringify(product.themes),
     variantsJson: JSON.stringify(product.variants ?? []),

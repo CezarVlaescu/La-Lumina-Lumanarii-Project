@@ -328,6 +328,63 @@ test("renders the candle creator with visible options", async () => {
   assert.match(html, /Adaugă creația în coș/);
 });
 
+test("persists and renders product scent and color attributes", async () => {
+  const [repository, editor, detail, productPage, migration] =
+    await Promise.all([
+      readFile(
+        new URL("../app/lib/catalog-repository.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/components/admin-products.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/components/product-detail.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/lumanari/[slug]/page.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL(
+          "../supabase/migrations/202611160001_product_attributes.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    ]);
+
+  assert.match(repository, /scent_id:\s*product\.scentId/);
+  assert.match(repository, /primary_color_id:\s*product\.primaryColorId/);
+  assert.match(repository, /secondary_color_id:\s*product\.secondaryColorId/);
+  assert.match(editor, /Aromă și culori/);
+  assert.match(editor, /Alege aroma produsului/);
+  assert.match(detail, /Caracterul lumânării/);
+  assert.match(productPage, /additionalProperty/);
+  assert.match(migration, /add column if not exists scent_id text/);
+  assert.match(migration, /add column if not exists primary_color_id text/);
+  assert.match(migration, /add column if not exists secondary_color_id text/);
+});
+
+test("keeps the candle creator usable on mobile", async () => {
+  const [component, styles] = await Promise.all([
+    readFile(
+      new URL("../app/components/candle-customizer.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(component, /customizer-mobile-preview/);
+  assert.match(component, /customizer-mobile-action/);
+  assert.match(styles, /\.customizer-mobile-action\s*\{/);
+  assert.match(styles, /position:\s*fixed/);
+  assert.match(styles, /\.customizer-preview\s*\{\s*display:\s*none;/s);
+  assert.match(styles, /scroll-snap-type:\s*x mandatory/);
+});
+
 test("does not expose implementation notes in public account and contact pages", async () => {
   const pages = await Promise.all([
     request("/cont"),

@@ -116,7 +116,11 @@ export function AdminDashboard({
     initialCustomizerSettings,
   );
   const incompleteProducts = products.filter(
-    (product) => product.price === null || !product.weight,
+    (product) =>
+      product.price === null ||
+      !product.weight ||
+      !product.scentId ||
+      !product.primaryColorId,
   ).length;
   const newOrders = orders.filter((order) => order.status === "new").length;
   const monthPrefix = new Date().toISOString().slice(0, 7);
@@ -229,7 +233,11 @@ export function AdminDashboard({
         )}
 
         {tab === "products" && (
-          <AdminProducts products={products} onChange={setProducts} />
+          <AdminProducts
+            products={products}
+            customizerSettings={customizerSettings}
+            onChange={setProducts}
+          />
         )}
 
         {tab === "customizer" && (

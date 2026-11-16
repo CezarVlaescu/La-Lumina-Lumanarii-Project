@@ -207,6 +207,47 @@ export function CandleCustomizer({ products, settings }: Props) {
         </div>
       </aside>
 
+      <section
+        className="customizer-mobile-preview"
+        aria-label="Selecția curentă"
+        aria-live="polite"
+      >
+        <div
+          className="customizer-mobile-preview__image"
+          style={
+            {
+              "--customizer-primary": primaryColor?.hex ?? "transparent",
+              "--customizer-secondary": secondaryColor?.hex ?? "transparent",
+            } as React.CSSProperties
+          }
+        >
+          <Image
+            src={product.image}
+            alt=""
+            fill
+            sizes="112px"
+            unoptimized
+          />
+          <span className="customizer-preview__veil" />
+        </div>
+        <div className="customizer-mobile-preview__content">
+          <p>Lumânarea ta</p>
+          <h2>{product.name}</h2>
+          <span>
+            {primaryColor?.name}
+            {secondaryColor ? ` + ${secondaryColor.name}` : ""}
+            {scent ? ` · ${scent.name}` : ""}
+          </span>
+          <div className="customizer-mobile-preview__palette" aria-hidden="true">
+            {primaryColor && <i style={{ backgroundColor: primaryColor.hex }} />}
+            {secondaryColor && <i style={{ backgroundColor: secondaryColor.hex }} />}
+            {accentColors.map((color) => (
+              <i key={color.id} style={{ backgroundColor: color.hex }} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <div className="customizer-steps">
         <section className="customizer-step" aria-labelledby="customizer-type">
           <div className="customizer-step__heading">
@@ -317,6 +358,21 @@ export function CandleCustomizer({ products, settings }: Props) {
             ))}
           </div>
         </section>
+      </div>
+
+      <div className="customizer-mobile-action">
+        <div>
+          <small>{product.name}</small>
+          <strong>{formatPrice(price)}</strong>
+        </div>
+        <button
+          className="button button--primary"
+          type="button"
+          onClick={addToCart}
+          disabled={!primaryColor || !scent}
+        >
+          Adaugă în coș
+        </button>
       </div>
     </div>
   );
